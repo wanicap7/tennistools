@@ -128,7 +128,7 @@
     </div>
   </div>
 
-  <script>
+<script>
     // プルダウン初期化 (デフォルトで5人を選択状態に設定)
     const playerSelect = document.getElementById('playerCount');
     for (let i = 4; i <= 20; i++) {
@@ -190,6 +190,15 @@
       return [...withHead, ...withoutHead];
     }
 
+    // 配列の完全シャッフル (フィッシャー–イェーツ)
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
     // 試合生成ロジック
     function generateRounds(count) {
       triggerVibration(20);
@@ -201,62 +210,71 @@
       for (let r = 0; r < count; r++) {
         const currentRoundNum = scheduleData.length + 1;
         let restedThisRound = [];
+        let playingThisRound = [];
 
-        if (numResting === 0) {
-          restedThisRound = [];
-        } else if (currentRoundNum === 1) {
-          // 第1試合：完全ランダムで選出
-          let allPlayers = Array.from({ length: numPlayers }, (_, i) => i + 1);
-          allPlayers.sort(() => Math.random() - 0.5);
-          restedThisRound = allPlayers.slice(0, numResting);
+        if (currentRoundNum === 1) {
+          // 第1試合：1番から順に出場（後ろの番号が休み）
+          playingThisRound = Array.from({ length: playersPerRound }, (_, i) => i + 1);
+          for (let p = playersPerRound + 1; p <= numPlayers; p++) {
+            restedThisRound.push(p);
+          }
         } else {
           // 第2試合以降：スコア計算で休みを選出
-          let allPlayers = Array.from({ length: numPlayers }, (_, i) => i + 1);
-          let allCombos = getCombinations(allPlayers, numResting);
-          let comboScores = [];
-
-          allCombos.forEach(combo => {
-            let score = 0;
-            let invalid = false;
-
-            // ① 直前に休んだ人は絶対禁止（2連続休みの防止）
-            combo.forEach(p => {
-              if (roundsSinceLastRest[p] === 0) {
-                invalid = true;
-              }
-            });
-
-            if (invalid) return;
-
-            // ② 個人の優先度スコア（連続出場数の多さを最優先）
-            combo.forEach(p => {
-              score += roundsSinceLastRest[p] * 120;
-              score -= restCounts[p] * 40;
-            });
-
-            // ③ 休みペアの重複禁止ペナルティ
-            for (let i = 0; i < combo.length; i++) {
-              for (let j = i + 1; j < combo.length; j++) {
-                let p1 = combo[i];
-                let p2 = combo[j];
-                score -= restPairMatrix[p1][p2] * 250;
-              }
-            }
-
-            // ④ 乱数（同点時に展開をバラけさせる）
-            score += Math.random() * 30;
-
-            comboScores.push({ combo, score });
-          });
-
-          if (comboScores.length > 0) {
-            comboScores.sort((a, b) => b.score - a.score);
-            restedThisRound = comboScores[0].combo;
+          if (numResting === 0) {
+            restedThisRound = [];
           } else {
-            let candidates = allPlayers.filter(p => roundsSinceLastRest[p] > 0);
-            candidates.sort(() => Math.random() - 0.5);
-            restedThisRound = candidates.slice(0, numResting);
+            let allPlayers = Array.from({ length: numPlayers }, (_, i) => i + 1);
+            let allCombos = getCombinations(allPlayers, numResting);
+            let comboScores = [];
+
+            allCombos.forEach(combo => {
+              let score = 0;
+              let invalid = false;
+
+              // ① 直前に休んだ人は絶対禁止（2連続休みの防止）
+              combo.forEach(p => {
+                if (roundsSinceLastRest[p] === 0) {
+                  invalid = true;
+                }
+              });
+
+              if (invalid) return;
+
+              // ② 個人の優先度スコア（連続出場数の多さを最優先）
+              combo.forEach(p => {
+                score += roundsSinceLastRest[p] * 120;
+                score -= restCounts[p] * 40;
+              });
+
+              // ③ 休みペアの重複禁止ペナルティ
+              for (let i = 0; i < combo.length; i++) {
+                for (let j = i + 1; j < combo.length; j++) {
+                  let p1 = combo[i];
+                  let p2 = combo[j];
+                  score -= restPairMatrix[p1][p2] * 250;
+                }
+              }
+
+              // ④ 乱数（同点時に展開をバラけさせる）
+              score += Math.random() * 30;
+
+              comboScores.push({ combo, score });
+            });
+
+            if (comboScores.length > 0) {
+              comboScores.sort((a, b) => b.score - a.score);
+              restedThisRound = comboScores[0].combo;
+            } else {
+              let candidates = allPlayers.filter(p => roundsSinceLastRest[p] > 0);
+              shuffleArray(candidates);
+              restedThisRound = candidates.slice(0, numResting);
+            }
           }
+
+          // 出場プレイヤーの決定 & 2試合目以降はシャッフル
+          playingThisRound = Array.from({ length: numPlayers }, (_, i) => i + 1)
+                                  .filter(p => !restedThisRound.includes(p));
+          shuffleArray(playingThisRound);
         }
 
         // 状態更新
@@ -280,11 +298,7 @@
           }
         }
 
-        // プレイするメンバー割り出し & シャッフル
-        let playingThisRound = Array.from({ length: numPlayers }, (_, i) => i + 1)
-                                    .filter(p => !restedThisRound.includes(p));
-        playingThisRound.sort(() => Math.random() - 0.5);
-        
+        // コート割り当て
         let courts = [];
         for (let c = 0; c < numCourts; c++) {
           let p = playingThisRound.slice(c * 4, c * 4 + 4);
