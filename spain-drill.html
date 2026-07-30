@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>テニス イン/アウト記録 (総合スコア付き)</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      text-align: center; margin: 0; padding: 15px; background-color: #f2f2f7; touch-action: manipulation;
+    }
+    
+    /* 結果表示エリア */
+    #result-board {
+      background: white; border-radius: 10px; padding: 15px; margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 2px solid #ccc;
+    }
+    
+    /* ヘッダー部分を3分割に変更 */
+    .board-header { 
+      display: flex; justify-content: space-between; align-items: flex-start;
+      font-weight: bold; font-size: 16px; margin-bottom: 12px; color: #333; 
+    }
+    .col { flex: 1; text-align: left; }
+    .col-center { flex: 1; text-align: center; color: #1c1c1e; }
+    .col-right { flex: 1; text-align: right; }
+    
+    /* スコアのスタイル */
+    .stats { font-size: 14px; color: #555; font-weight: normal; margin-top: 3px; }
+    .total-stats { font-size: 16px; font-weight: bold; color: #34C759; } /* 総合点は少し目立たせる */
+    
+    .board-content { display: flex; justify-content: space-between; font-size: 24px; letter-spacing: 2px; word-break: break-all; min-height: 40px; }
+    .divider { width: 2px; background: #ccc; margin: 0 10px; flex-shrink: 0; }
+    
+    /* 〇と×の色分け */
+    .mark-in { color: #34C759; }
+    .mark-out { color: #FF3B30; }
+
+    /* 操作ボタン */
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+    .btn { 
+      padding: 20px 0; font-size: 20px; font-weight: bold; color: white;
+      border: none; border-radius: 10px; cursor: pointer;
+    }
+    .btn-fore-in { background-color: #007AFF; }
+    .btn-fore-out { background-color: #5ac8fa; color: #000; }
+    .btn-back-in { background-color: #FF9500; }
+    .btn-back-out { background-color: #FFcc00; color: #000; }
+    .btn:active { opacity: 0.7; }
+
+    /* サブボタン */
+    .sub-controls { display: flex; gap: 10px; }
+    .btn-sub { flex: 1; padding: 12px; font-size: 16px; border-radius: 8px; border: none; cursor: pointer; background: #8E8E93; color: white; }
+    .btn-copy { background: #34C759; }
+  </style>
+</head>
+<body>
+
+  <div id="result-board">
+    <div class="board-header">
+      <div class="col">
+        フォア
+        <div id="fore-stats" class="stats">0/0 (-%)</div>
+      </div>
+      <!-- 中央に追加した総合点エリア -->
+      <div class="col-center">
+        総合
+        <div id="total-stats" class="stats total-stats">0/0 (-%)</div>
+      </div>
+      <div class="col-right">
+        バック
+        <div id="back-stats" class="stats">0/0 (-%)</div>
+      </div>
+    </div>
+    <div class="board-content">
+      <div class="col" id="fore-history"></div>
+      <div class="divider"></div>
+      <div class="col-right" id="back-history"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-fore-in" onclick="addMark('fore', '〇')">フォア 〇</button>
+    <button class="btn btn-back-in" onclick="addMark('back', '〇')">バック 〇</button>
+    
+    <button class="btn btn-fore-out" onclick="addMark('fore', '×')">フォア ×</button>
+    <button class="btn btn-back-out" onclick="addMark('back', '×')">バック ×</button>
+  </div>
+
+  <div class="sub-controls">
+    <button class="btn-sub" onclick="undo()">1つ戻る</button>
+    <button class="btn-sub btn-copy" onclick="copyText()">テキストコピー</button>
+    <button class="btn-sub" onclick="resetAll()">リセット</button>
+  </div>
+
+  <script>
+    let foreMarks = [];
+    let backMarks = [];
+    let lastAction = null;
+
+    function addMark(side, mark) {
+      const htmlMark = mark === '〇' ? `<span class="mark-in">〇</span>` : `<span class="mark-out">×</span>`;
+      if (side === 'fore') {
+        foreMarks.push({ raw: mark, html: htmlMark });
+        lastAction = 'fore';
+      } else {
+        backMarks.push({ raw: mark, html: htmlMark });
+        lastAction = 'back';
+      }
+      updateDisplay();
+    }
+
+    // 個別のスコアテキストを生成
+    function getStatsText(marks) {
+      const total = marks.length;
+      if (total === 0) return "0/0 (-%)";
+      const inCount = marks.filter(m => m.raw === '〇').length;
+      const percent = Math.round((inCount / total) * 100);
+      return `${inCount}/${total} (${percent}%)`;
+    }
+
+    // 総合のスコアテキストを生成
+    function getTotalStatsText() {
+      const totalCount = foreMarks.length + backMarks.length;
+      if (totalCount === 0) return "0/0 (-%)";
+      
+      const inCount = foreMarks.filter(m => m.raw === '〇').length + 
+                      backMarks.filter(m => m.raw === '〇').length;
+      const percent = Math.round((inCount / totalCount) * 100);
+      return `${inCount}/${totalCount} (${percent}%)`;
+    }
+
+    function updateDisplay() {
+      // 履歴の更新
+      document.getElementById('fore-history').innerHTML = foreMarks.map(m => m.html).join('');
+      document.getElementById('back-history').innerHTML = backMarks.map(m => m.html).join('');
+      
+      // 個別スコアと総合スコアの更新
+      document.getElementById('fore-stats').innerText = getStatsText(foreMarks);
+      document.getElementById('back-stats').innerText = getStatsText(backMarks);
+      document.getElementById('total-stats').innerText = getTotalStatsText();
+    }
+
+    function undo() {
+      if (lastAction === 'fore' && foreMarks.length > 0) {
+        foreMarks.pop();
+        lastAction = null;
+      } else if (lastAction === 'back' && backMarks.length > 0) {
+        backMarks.pop();
+        lastAction = null;
+      }
+      updateDisplay();
+    }
+
+    function resetAll() {
+      if(confirm('記録をすべて消去しますか？')) {
+        foreMarks = []; backMarks = []; updateDisplay();
+      }
+    }
+
+    function copyText() {
+      const fStr = foreMarks.map(m => m.raw).join('');
+      const bStr = backMarks.map(m => m.raw).join('');
+      
+      const fStats = getStatsText(foreMarks);
+      const bStats = getStatsText(backMarks);
+      const tStats = getTotalStatsText();
+      
+      // コピー内容にも総合点を含める
+      const textToCopy = `【総合】 ${tStats}\nフォア ${fStats} | バック ${bStats}\n${fStr}｜${bStr}`;
+      
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        alert("クリップボードにコピーしました！\n\n" + textToCopy);
+      }).catch(err => {
+        alert("コピーに失敗しました。");
+      });
+    }
+  </script>
+</body>
+</html>
