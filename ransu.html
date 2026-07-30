@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>テニス 乱数表アプリ</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0; padding: 12px; background-color: #f2f2f7; color: #1c1c1e;
+      touch-action: manipulation;
+    }
+    h1 { font-size: 20px; text-align: center; margin: 5px 0 15px; }
+
+    /* 設定エリア */
+    .config-card {
+      background: white; border-radius: 12px; padding: 15px;
+      margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .config-row { display: flex; gap: 15px; margin-bottom: 10px; }
+    .config-group { flex: 1; text-align: left; }
+    .config-group label { display: block; font-size: 12px; color: #666; margin-bottom: 4px; font-weight: bold; }
+    .config-group select {
+      width: 100%; padding: 10px; font-size: 16px; border-radius: 8px;
+      border: 1px solid #ccc; background: #fafafa;
+    }
+    .btn-main {
+      width: 100%; padding: 12px; background: #007AFF; color: white; border: none;
+      border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
+    }
+    .btn-main:active { opacity: 0.8; }
+
+    /* 試合一覧エリア */
+    .match-card {
+      background: white; border-radius: 12px; padding: 12px; margin-bottom: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .match-card.active { border-color: #34C759; background-color: #f0fdf4; }
+    
+    .match-header {
+      display: flex; justify-content: space-between; align-items: center;
+      font-weight: bold; font-size: 14px; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px;
+    }
+    .active-badge { background: #34C759; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; }
+    
+    .court-grid { display: flex; flex-direction: column; gap: 8px; }
+    .court-box {
+      background: #f8f9fa; border-radius: 8px; padding: 8px 10px;
+      display: flex; justify-content: space-between; align-items: center;
+      border: 1px dashed #ccc; user-select: none;
+    }
+    .court-name { font-size: 12px; font-weight: bold; color: #555; width: 55px; }
+    .match-pair { font-size: 15px; font-weight: bold; flex: 1; text-align: center; }
+    .score-display {
+      font-size: 16px; font-weight: bold; color: #007AFF; width: 50px; text-align: right;
+    }
+
+    .rest-box { font-size: 12px; color: #8e8e93; margin-top: 6px; text-align: left; }
+
+    /* サブボタン */
+    .action-bar { display: flex; gap: 10px; margin-top: 15px; margin-bottom: 30px; }
+    .btn-sub { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
+    .btn-copy { background: #34C759; color: white; }
+
+    /* モーダル (スコア入力) */
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;
+    }
+    .modal {
+      background: white; padding: 20px; border-radius: 12px; width: 80%; max-width: 300px; text-align: center;
+    }
+    .modal-scores { display: flex; justify-content: space-around; margin: 20px 0; }
+    .modal-scores select { font-size: 20px; padding: 5px 10px; }
+  </style>
+</head>
+<body>
+
+  <h1>🎾 乱数表ジェネレーター</h1>
+
+  <div class="config-card">
+    <div class="config-row">
+      <div class="config-group">
+        <label>参加人数</label>
+        <select id="playerCount">
+          <!-- 4〜20人 -->
+        </select>
+      </div>
+      <div class="config-group">
+        <label>コート数</label>
+        <select id="courtCount">
+          <option value="1">1面 (4人打)</option>
+          <option value="2">2面 (8人打)</option>
+          <option value="3">3面 (12人打)</option>
+          <option value="4">4面 (16人打)</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-main" onclick="generateSchedule()">乱数表を作成する</button>
+  </div>
+
+  <div id="scheduleContainer"></div>
+
+  <div class="action-bar" id="actionBar" style="display:none;">
+    <button class="btn-sub btn-copy" onclick="copyScheduleText()">LINE用に共有テキスト保存</button>
+  </div>
+
+  <!-- スコア入力モーダル -->
+  <div class="modal-overlay" id="scoreModal">
+    <div class="modal">
+      <h3 id="modalTitle">スコア入力</h3>
+      <p id="modalPair" style="font-weight:bold;"></p>
+      <div class="modal-scores">
+        <select id="scoreA"></select>
+        <span style="font-size:20px; align-self:center;">-</span>
+        <select id="scoreB"></select>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn-sub" onclick="closeModal()" style="background:#8e8e93; color:white;">キャンセル</button>
+        <button class="btn-sub" onclick="saveScore()" style="background:#007AFF; color:white;">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // プルダウン初期化
+    const playerSelect = document.getElementById('playerCount');
+    for (let i = 4; i <= 20; i++) {
+      const opt = document.createElement('option');
+      opt.value = i; opt.innerText = `${i} 人`;
+      playerSelect.appendChild(opt);
+    }
+
+    let scheduleData = [];
+    let activeMatchIndex = 0;
+    let targetScoreInfo = null; // { roundIdx, courtIdx }
+
+    function triggerVibration(ms = 15) {
+      if ("vibrate" in navigator) navigator.vibrate(ms);
+    }
+
+    // アルゴリズム：連続休み回避 ＆ 組み合わせ生成
+    function generateSchedule() {
+      triggerVibration(20);
+      const numPlayers = parseInt(document.getElementById('playerCount').value);
+      const numCourts = parseInt(document.getElementById('courtCount').value);
+      const playersPerRound = numCourts * 4;
+
+      if (numPlayers < playersPerRound) {
+        alert(`${numCourts}面でプレイするには最低 ${playersPerRound}人 必要です。`);
+        return;
+      }
+
+      const totalRounds = 8; // デフォルトで8試合分作成
+      scheduleData = [];
+
+      let playCounts = new Array(numPlayers + 1).fill(0);
+      let restCounts = new Array(numPlayers + 1).fill(0);
+      let lastRested = new Set();
+
+      for (let r = 0; r < totalRounds; r++) {
+        let playingThisRound = [];
+
+        if (r === 0) {
+          // 第1試合：順番通り (1,2,3,4 ...)
+          for (let p = 1; p <= playersPerRound; p++) playingThisRound.push(p);
+        } else {
+          // 2試合目以降：2連続休み絶対回避 + 均等化
+          let candidates = [];
+          for (let p = 1; p <= numPlayers; p++) {
+            let priority = 0;
+            // 直前休んだ人は絶対優先（2連続休み回避）
+            if (lastRested.has(p)) priority += 1000;
+            // プレイ数が少ない人を優先
+            priority -= playCounts[p] * 10;
+            // ランダム要素（毎回違う組み合わせに）
+            priority += Math.random();
+            candidates.push({ id: p, priority });
+          }
+
+          candidates.sort((a, b) => b.priority - a.priority);
+          playingThisRound = candidates.slice(0, playersPerRound).map(c => c.id);
+        }
+
+        // 休みメンバーを記録
+        let restedThisRound = [];
+        for (let p = 1; p <= numPlayers; p++) {
+          if (!playingThisRound.includes(p)) restedThisRound.push(p);
+        }
+
+        // 状態更新
+        playingThisRound.forEach(p => playCounts[p]++);
+        restedThisRound.forEach(p => restCounts[p]++);
+        lastRested = new Set(restedThisRound);
+
+        // コートごとに4人ずつ振り分け＆ペア（1・2 vs 3・4）
+        let courts = [];
+        for (let c = 0; c < numCourts; c++) {
+          let p = playingThisRound.slice(c * 4, c * 4 + 4);
+          courts.push({
+            courtNum: String.fromCharCode(65 + c), // A, B, C...
+            p1: p[0], p2: p[1], p3: p[2], p4: p[3],
+            scoreA: '-', scoreB: '-'
+          });
+        }
+
+        scheduleData.push({
+          round: r + 1,
+          courts: courts,
+          rest: restedThisRound
+        });
+      }
+
+      activeMatchIndex = 0;
+      renderSchedule();
+      document.getElementById('actionBar').style.display = 'flex';
+    }
+
+    // 画面描画
+    function renderSchedule() {
+      const container = document.getElementById('scheduleContainer');
+      container.innerHTML = '';
+
+      scheduleData.forEach((rd, rIdx) => {
+        const card = document.createElement('div');
+        card.className = `match-card ${rIdx === activeMatchIndex ? 'active' : ''}`;
+        
+        let courtHtml = '';
+        rd.courts.forEach((c, cIdx) => {
+          courtHtml += `
+            <div class="court-box" onclick="handleTap(${rIdx}, ${cIdx})">
+              <span class="court-name">${c.courtNum}コート</span>
+              <span class="match-pair">${c.p1}・${c.p2} vs ${c.p3}・${c.p4}</span>
+              <span class="score-display">${c.scoreA} - ${c.scoreB}</span>
+            </div>
+          `;
+        });
+
+        let restText = rd.rest.length > 0 ? `休: ${rd.rest.join(', ')}` : '休みなし';
+
+        card.innerHTML = `
+          <div class="match-header" onclick="setActiveMatch(${rIdx})">
+            <span>第 ${rd.round} 試合</span>
+            ${rIdx === activeMatchIndex ? '<span class="active-badge">進行中</span>' : ''}
+          </div>
+          <div class="court-grid">${courtHtml}</div>
+          <div class="rest-box">${restText}</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // 進行中の試合切り替え
+    function setActiveMatch(rIdx) {
+      triggerVibration(10);
+      activeMatchIndex = rIdx;
+      renderSchedule();
+    }
+
+    // 2回タップ（ダブルタップ）検知処理
+    let lastTapTime = 0;
+    let lastTapTarget = null;
+
+    function handleTap(rIdx, cIdx) {
+      const now = new Date().getTime();
+      const targetId = `${rIdx}-${cIdx}`;
+
+      if (now - lastTapTime < 300 && lastTapTarget === targetId) {
+        // ダブルタップ成功 -> スコアモーダルオープン
+        openScoreModal(rIdx, cIdx);
+      } else {
+        // 1回目のタップ -> 該当試合を進行中にセット
+        setActiveMatch(rIdx);
+      }
+      lastTapTime = now;
+      lastTapTarget = targetId;
+    }
+
+    // スコアモーダル表示
+    function openScoreModal(rIdx, cIdx) {
+      triggerVibration(20);
+      targetScoreInfo = { rIdx, cIdx };
+      const court = scheduleData[rIdx].courts[cIdx];
+
+      document.getElementById('modalTitle').innerText = `第${rIdx+1}試合 (${court.courtNum}コート)`;
+      document.getElementById('modalPair').innerText = `${court.p1}・${court.p2} vs ${court.p3}・${court.p4}`;
+
+      // スコアプルダウン生成 (0〜7)
+      const scoreASelect = document.getElementById('scoreA');
+      const scoreBSelect = document.getElementById('scoreB');
+      scoreASelect.innerHTML = ''; scoreBSelect.innerHTML = '';
+
+      for (let i = 0; i <= 7; i++) {
+        scoreASelect.add(new Option(i, i));
+        scoreBSelect.add(new Option(i, i));
+      }
+
+      scoreASelect.value = court.scoreA !== '-' ? court.scoreA : 0;
+      scoreBSelect.value = court.scoreB !== '-' ? court.scoreB : 0;
+
+      document.getElementById('scoreModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('scoreModal').style.display = 'none';
+    }
+
+    function saveScore() {
+      triggerVibration(15);
+      if (targetScoreInfo) {
+        const { rIdx, cIdx } = targetScoreInfo;
+        scheduleData[rIdx].courts[cIdx].scoreA = document.getElementById('scoreA').value;
+        scheduleData[rIdx].courts[cIdx].scoreB = document.getElementById('scoreB').value;
+        renderSchedule();
+      }
+      closeModal();
+    }
+
+    // LINE共有用テキスト作成
+    function copyScheduleText() {
+      triggerVibration(15);
+      let text = "🎾【テニス乱数表】\n\n";
+
+      scheduleData.forEach(rd => {
+        text += `■ 第${rd.round}試合\n`;
+        rd.courts.forEach(c => {
+          let score = (c.scoreA !== '-') ? ` (${c.scoreA}-${c.scoreB})` : '';
+          text += ` ${c.courtNum}: ${c.p1}・${c.p2} vs ${c.p3}・${c.p4}${score}\n`;
+        });
+        if (rd.rest.length > 0) text += ` 休: ${rd.rest.join(', ')}\n`;
+        text += "\n";
+      });
+
+      navigator.clipboard.writeText(text).then(() => {
+        alert("LINE用の共有テキストをコピーしました！");
+      }).catch(() => {
+        alert("コピーに失敗しました");
+      });
+    }
+  </script>
+</body>
+</html>
