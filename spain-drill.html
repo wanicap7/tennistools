@@ -16,7 +16,7 @@
       box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 2px solid #ccc;
     }
     
-    /* ヘッダー部分を3分割に変更 */
+    /* ヘッダー部分 */
     .board-header { 
       display: flex; justify-content: space-between; align-items: flex-start;
       font-weight: bold; font-size: 16px; margin-bottom: 12px; color: #333; 
@@ -27,7 +27,7 @@
     
     /* スコアのスタイル */
     .stats { font-size: 14px; color: #555; font-weight: normal; margin-top: 3px; }
-    .total-stats { font-size: 16px; font-weight: bold; color: #34C759; } /* 総合点は少し目立たせる */
+    .total-stats { font-size: 16px; font-weight: bold; color: #34C759; }
     
     .board-content { display: flex; justify-content: space-between; font-size: 24px; letter-spacing: 2px; word-break: break-all; min-height: 40px; }
     .divider { width: 2px; background: #ccc; margin: 0 10px; flex-shrink: 0; }
@@ -36,7 +36,7 @@
     .mark-in { color: #34C759; }
     .mark-out { color: #FF3B30; }
 
-    /* 操作ボタン */
+    /* 操作ボタン (フォアとバックの左右を反転) */
     .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
     .btn { 
       padding: 20px 0; font-size: 20px; font-weight: bold; color: white;
@@ -62,7 +62,6 @@
         フォア
         <div id="fore-stats" class="stats">0/0 (-%)</div>
       </div>
-      <!-- 中央に追加した総合点エリア -->
       <div class="col-center">
         総合
         <div id="total-stats" class="stats total-stats">0/0 (-%)</div>
@@ -79,6 +78,7 @@
     </div>
   </div>
 
+  <!-- ボタンの並び順を「フォア | バック」の順に変更 -->
   <div class="controls">
     <button class="btn btn-fore-in" onclick="addMark('fore', '〇')">フォア 〇</button>
     <button class="btn btn-back-in" onclick="addMark('back', '〇')">バック 〇</button>
@@ -98,7 +98,16 @@
     let backMarks = [];
     let lastAction = null;
 
+    // バイブレーションを鳴らす共通関数（15ミリ秒のプチ感触）
+    function triggerVibration(ms = 15) {
+      if ("vibrate" in navigator) {
+        navigator.vibrate(ms);
+      }
+    }
+
     function addMark(side, mark) {
+      triggerVibration(15); // ボタン押し時にポコッと振動
+
       const htmlMark = mark === '〇' ? `<span class="mark-in">〇</span>` : `<span class="mark-out">×</span>`;
       if (side === 'fore') {
         foreMarks.push({ raw: mark, html: htmlMark });
@@ -110,7 +119,6 @@
       updateDisplay();
     }
 
-    // 個別のスコアテキストを生成
     function getStatsText(marks) {
       const total = marks.length;
       if (total === 0) return "0/0 (-%)";
@@ -119,7 +127,6 @@
       return `${inCount}/${total} (${percent}%)`;
     }
 
-    // 総合のスコアテキストを生成
     function getTotalStatsText() {
       const totalCount = foreMarks.length + backMarks.length;
       if (totalCount === 0) return "0/0 (-%)";
@@ -131,17 +138,16 @@
     }
 
     function updateDisplay() {
-      // 履歴の更新
       document.getElementById('fore-history').innerHTML = foreMarks.map(m => m.html).join('');
       document.getElementById('back-history').innerHTML = backMarks.map(m => m.html).join('');
       
-      // 個別スコアと総合スコアの更新
       document.getElementById('fore-stats').innerText = getStatsText(foreMarks);
       document.getElementById('back-stats').innerText = getStatsText(backMarks);
       document.getElementById('total-stats').innerText = getTotalStatsText();
     }
 
     function undo() {
+      triggerVibration(10);
       if (lastAction === 'fore' && foreMarks.length > 0) {
         foreMarks.pop();
         lastAction = null;
@@ -153,12 +159,14 @@
     }
 
     function resetAll() {
+      triggerVibration(30);
       if(confirm('記録をすべて消去しますか？')) {
         foreMarks = []; backMarks = []; updateDisplay();
       }
     }
 
     function copyText() {
+      triggerVibration(15);
       const fStr = foreMarks.map(m => m.raw).join('');
       const bStr = backMarks.map(m => m.raw).join('');
       
@@ -166,7 +174,6 @@
       const bStats = getStatsText(backMarks);
       const tStats = getTotalStatsText();
       
-      // コピー内容にも総合点を含める
       const textToCopy = `【総合】 ${tStats}\nフォア ${fStats} | バック ${bStats}\n${fStr}｜${bStr}`;
       
       navigator.clipboard.writeText(textToCopy).then(() => {
