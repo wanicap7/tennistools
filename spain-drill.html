@@ -36,16 +36,16 @@
     .mark-in { color: #34C759; }
     .mark-out { color: #FF3B30; }
 
-    /* 操作ボタン (フォアとバックの左右を反転) */
+    /* 操作ボタン (バック | フォア) */
     .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
     .btn { 
       padding: 20px 0; font-size: 20px; font-weight: bold; color: white;
       border: none; border-radius: 10px; cursor: pointer;
     }
-    .btn-fore-in { background-color: #007AFF; }
-    .btn-fore-out { background-color: #5ac8fa; color: #000; }
     .btn-back-in { background-color: #FF9500; }
     .btn-back-out { background-color: #FFcc00; color: #000; }
+    .btn-fore-in { background-color: #007AFF; }
+    .btn-fore-out { background-color: #5ac8fa; color: #000; }
     .btn:active { opacity: 0.7; }
 
     /* サブボタン */
@@ -59,32 +59,32 @@
   <div id="result-board">
     <div class="board-header">
       <div class="col">
-        フォア
-        <div id="fore-stats" class="stats">0/0 (-%)</div>
+        バック
+        <div id="back-stats" class="stats">0/0 (-%)</div>
       </div>
       <div class="col-center">
         総合
         <div id="total-stats" class="stats total-stats">0/0 (-%)</div>
       </div>
       <div class="col-right">
-        バック
-        <div id="back-stats" class="stats">0/0 (-%)</div>
+        フォア
+        <div id="fore-stats" class="stats">0/0 (-%)</div>
       </div>
     </div>
     <div class="board-content">
-      <div class="col" id="fore-history"></div>
+      <div class="col" id="back-history"></div>
       <div class="divider"></div>
-      <div class="col-right" id="back-history"></div>
+      <div class="col-right" id="fore-history"></div>
     </div>
   </div>
 
-  <!-- ボタンの並び順を「フォア | バック」の順に変更 -->
+  <!-- ボタンの並び順：「バック | フォア」 -->
   <div class="controls">
-    <button class="btn btn-fore-in" onclick="addMark('fore', '〇')">フォア 〇</button>
     <button class="btn btn-back-in" onclick="addMark('back', '〇')">バック 〇</button>
+    <button class="btn btn-fore-in" onclick="addMark('fore', '〇')">フォア 〇</button>
     
-    <button class="btn btn-fore-out" onclick="addMark('fore', '×')">フォア ×</button>
     <button class="btn btn-back-out" onclick="addMark('back', '×')">バック ×</button>
+    <button class="btn btn-fore-out" onclick="addMark('fore', '×')">フォア ×</button>
   </div>
 
   <div class="sub-controls">
@@ -174,7 +174,7 @@
       const bStats = getStatsText(backMarks);
       const tStats = getTotalStatsText();
       
-      const textToCopy = `【総合】 ${tStats}\nフォア ${fStats} | バック ${bStats}\n${fStr}｜${bStr}`;
+      const textToCopy = `【総合】 ${tStats}\nバック ${bStats} | フォア ${fStats}\n${bStr}｜${fStr}`;
       
       navigator.clipboard.writeText(textToCopy).then(() => {
         alert("クリップボードにコピーしました！\n\n" + textToCopy);
