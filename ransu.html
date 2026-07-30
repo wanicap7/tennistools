@@ -28,7 +28,11 @@
       width: 100%; padding: 12px; background: #007AFF; color: white; border: none;
       border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
     }
-    .btn-main:active { opacity: 0.8; }
+    .btn-add {
+      width: 100%; padding: 12px; background: #FF9500; color: white; border: none;
+      border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px;
+    }
+    .btn-main:active, .btn-add:active { opacity: 0.8; }
 
     /* 試合一覧エリア */
     .match-card {
@@ -59,8 +63,8 @@
     .rest-box { font-size: 12px; color: #8e8e93; margin-top: 6px; text-align: left; }
 
     /* サブボタン */
-    .action-bar { display: flex; gap: 10px; margin-top: 15px; margin-bottom: 30px; }
-    .btn-sub { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
+    .action-bar { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; margin-bottom: 30px; }
+    .btn-sub { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
     .btn-copy { background: #34C759; color: white; }
 
     /* モーダル (スコア入力) */
@@ -84,7 +88,7 @@
       <div class="config-group">
         <label>参加人数</label>
         <select id="playerCount">
-          <!-- 4〜20人 -->
+          <!-- 4〜20人 (5人をデフォルト選択) -->
         </select>
       </div>
       <div class="config-group">
@@ -97,12 +101,13 @@
         </select>
       </div>
     </div>
-    <button class="btn-main" onclick="generateSchedule()">乱数表を作成する</button>
+    <button class="btn-main" onclick="startNewSchedule()">乱数表を新規作成</button>
   </div>
 
   <div id="scheduleContainer"></div>
 
   <div class="action-bar" id="actionBar" style="display:none;">
+    <button class="btn-add" onclick="appendMoreRounds()">＋ 続きの試合を追加生成する (8試合分)</button>
     <button class="btn-sub btn-copy" onclick="copyScheduleText()">LINE用に共有テキスト保存</button>
   </div>
 
@@ -124,97 +129,180 @@
   </div>
 
   <script>
-    // プルダウン初期化
+    // プルダウン初期化 (デフォルトで5人を選択状態に設定)
     const playerSelect = document.getElementById('playerCount');
     for (let i = 4; i <= 20; i++) {
       const opt = document.createElement('option');
       opt.value = i; opt.innerText = `${i} 人`;
+      if (i === 5) opt.selected = true; // デフォルト5人
       playerSelect.appendChild(opt);
     }
 
     let scheduleData = [];
     let activeMatchIndex = 0;
-    let targetScoreInfo = null; // { roundIdx, courtIdx }
+    let targetScoreInfo = null;
+
+    // 平準化・ペア履歴用データ
+    let playCounts = [];
+    let restCounts = [];
+    let roundsSinceLastRest = []; // 前回休んでからの経過試合数
+    let restPairMatrix = [];      // 誰と誰が一緒に休んだかの記録
 
     function triggerVibration(ms = 15) {
       if ("vibrate" in navigator) navigator.vibrate(ms);
     }
 
-    // アルゴリズム：連続休み回避 ＆ 組み合わせ生成
-    function generateSchedule() {
+    // 新規作成
+    function startNewSchedule() {
+      const numPlayers = parseInt(document.getElementById('playerCount').value);
+      const numCourts = parseInt(document.getElementById('courtCount').value);
+      if (numPlayers < numCourts * 4) {
+        alert(`${numCourts}面でプレイするには最低 ${numCourts * 4}人 必要です。`);
+        return;
+      }
+
+      scheduleData = [];
+      activeMatchIndex = 0;
+      playCounts = new Array(numPlayers + 1).fill(0);
+      restCounts = new Array(numPlayers + 1).fill(0);
+      roundsSinceLastRest = new Array(numPlayers + 1).fill(99);
+
+      // 一緒に休んだ回数を記録する2次元配列を初期化
+      restPairMatrix = Array.from({ length: numPlayers + 1 }, () => new Array(numPlayers + 1).fill(0));
+
+      generateRounds(8);
+      document.getElementById('actionBar').style.display = 'flex';
+    }
+
+    // 続きを追加生成
+    function appendMoreRounds() {
+      generateRounds(8);
+    }
+
+    // 組み合わせの全列挙ヘルパー（休み候補用）
+    function getCombinations(arr, k) {
+      if (k === 0) return [[]];
+      if (arr.length === 0) return [];
+      const head = arr[0];
+      const tail = arr.slice(1);
+      const withHead = getCombinations(tail, k - 1).map(c => [head, ...c]);
+      const withoutHead = getCombinations(tail, k);
+      return [...withHead, ...withoutHead];
+    }
+
+    // 試合生成ロジック
+    function generateRounds(count) {
       triggerVibration(20);
       const numPlayers = parseInt(document.getElementById('playerCount').value);
       const numCourts = parseInt(document.getElementById('courtCount').value);
       const playersPerRound = numCourts * 4;
+      const numResting = numPlayers - playersPerRound;
 
-      if (numPlayers < playersPerRound) {
-        alert(`${numCourts}面でプレイするには最低 ${playersPerRound}人 必要です。`);
-        return;
-      }
-
-      const totalRounds = 8; // デフォルトで8試合分作成
-      scheduleData = [];
-
-      let playCounts = new Array(numPlayers + 1).fill(0);
-      let restCounts = new Array(numPlayers + 1).fill(0);
-      let lastRested = new Set();
-
-      for (let r = 0; r < totalRounds; r++) {
-        let playingThisRound = [];
-
-        if (r === 0) {
-          // 第1試合：順番通り (1,2,3,4 ...)
-          for (let p = 1; p <= playersPerRound; p++) playingThisRound.push(p);
-        } else {
-          // 2試合目以降：2連続休み絶対回避 + 均等化
-          let candidates = [];
-          for (let p = 1; p <= numPlayers; p++) {
-            let priority = 0;
-            // 直前休んだ人は絶対優先（2連続休み回避）
-            if (lastRested.has(p)) priority += 1000;
-            // プレイ数が少ない人を優先
-            priority -= playCounts[p] * 10;
-            // ランダム要素（毎回違う組み合わせに）
-            priority += Math.random();
-            candidates.push({ id: p, priority });
-          }
-
-          candidates.sort((a, b) => b.priority - a.priority);
-          playingThisRound = candidates.slice(0, playersPerRound).map(c => c.id);
-        }
-
-        // 休みメンバーを記録
+      for (let r = 0; r < count; r++) {
+        const currentRoundNum = scheduleData.length + 1;
         let restedThisRound = [];
-        for (let p = 1; p <= numPlayers; p++) {
-          if (!playingThisRound.includes(p)) restedThisRound.push(p);
+
+        if (numResting === 0) {
+          restedThisRound = [];
+        } else if (currentRoundNum === 1) {
+          // 第1試合：完全ランダムで選出
+          let allPlayers = Array.from({ length: numPlayers }, (_, i) => i + 1);
+          allPlayers.sort(() => Math.random() - 0.5);
+          restedThisRound = allPlayers.slice(0, numResting);
+        } else {
+          // 第2試合以降：スコア計算で休みを選出
+          let allPlayers = Array.from({ length: numPlayers }, (_, i) => i + 1);
+          let allCombos = getCombinations(allPlayers, numResting);
+          let comboScores = [];
+
+          allCombos.forEach(combo => {
+            let score = 0;
+            let invalid = false;
+
+            // ① 直前に休んだ人は絶対禁止（2連続休みの防止）
+            combo.forEach(p => {
+              if (roundsSinceLastRest[p] === 0) {
+                invalid = true;
+              }
+            });
+
+            if (invalid) return;
+
+            // ② 個人の優先度スコア（連続出場数の多さを最優先）
+            combo.forEach(p => {
+              score += roundsSinceLastRest[p] * 120;
+              score -= restCounts[p] * 40;
+            });
+
+            // ③ 休みペアの重複禁止ペナルティ
+            for (let i = 0; i < combo.length; i++) {
+              for (let j = i + 1; j < combo.length; j++) {
+                let p1 = combo[i];
+                let p2 = combo[j];
+                score -= restPairMatrix[p1][p2] * 250;
+              }
+            }
+
+            // ④ 乱数（同点時に展開をバラけさせる）
+            score += Math.random() * 30;
+
+            comboScores.push({ combo, score });
+          });
+
+          if (comboScores.length > 0) {
+            comboScores.sort((a, b) => b.score - a.score);
+            restedThisRound = comboScores[0].combo;
+          } else {
+            let candidates = allPlayers.filter(p => roundsSinceLastRest[p] > 0);
+            candidates.sort(() => Math.random() - 0.5);
+            restedThisRound = candidates.slice(0, numResting);
+          }
         }
 
         // 状態更新
-        playingThisRound.forEach(p => playCounts[p]++);
-        restedThisRound.forEach(p => restCounts[p]++);
-        lastRested = new Set(restedThisRound);
+        for (let p = 1; p <= numPlayers; p++) {
+          if (restedThisRound.includes(p)) {
+            restCounts[p]++;
+            roundsSinceLastRest[p] = 0;
+          } else {
+            playCounts[p]++;
+            roundsSinceLastRest[p]++;
+          }
+        }
 
-        // コートごとに4人ずつ振り分け＆ペア（1・2 vs 3・4）
+        // 一緒に休んだ記録を計算
+        for (let i = 0; i < restedThisRound.length; i++) {
+          for (let j = i + 1; j < restedThisRound.length; j++) {
+            let p1 = restedThisRound[i];
+            let p2 = restedThisRound[j];
+            restPairMatrix[p1][p2]++;
+            restPairMatrix[p2][p1]++;
+          }
+        }
+
+        // プレイするメンバー割り出し & シャッフル
+        let playingThisRound = Array.from({ length: numPlayers }, (_, i) => i + 1)
+                                    .filter(p => !restedThisRound.includes(p));
+        playingThisRound.sort(() => Math.random() - 0.5);
+        
         let courts = [];
         for (let c = 0; c < numCourts; c++) {
           let p = playingThisRound.slice(c * 4, c * 4 + 4);
           courts.push({
-            courtNum: String.fromCharCode(65 + c), // A, B, C...
+            courtNum: String.fromCharCode(65 + c),
             p1: p[0], p2: p[1], p3: p[2], p4: p[3],
             scoreA: '-', scoreB: '-'
           });
         }
 
         scheduleData.push({
-          round: r + 1,
+          round: currentRoundNum,
           courts: courts,
-          rest: restedThisRound
+          rest: restedThisRound.sort((a, b) => a - b)
         });
       }
 
-      activeMatchIndex = 0;
       renderSchedule();
-      document.getElementById('actionBar').style.display = 'flex';
     }
 
     // 画面描画
@@ -251,14 +339,13 @@
       });
     }
 
-    // 進行中の試合切り替え
     function setActiveMatch(rIdx) {
       triggerVibration(10);
       activeMatchIndex = rIdx;
       renderSchedule();
     }
 
-    // 2回タップ（ダブルタップ）検知処理
+    // タップ・ダブルタップ制御
     let lastTapTime = 0;
     let lastTapTarget = null;
 
@@ -267,17 +354,14 @@
       const targetId = `${rIdx}-${cIdx}`;
 
       if (now - lastTapTime < 300 && lastTapTarget === targetId) {
-        // ダブルタップ成功 -> スコアモーダルオープン
         openScoreModal(rIdx, cIdx);
       } else {
-        // 1回目のタップ -> 該当試合を進行中にセット
         setActiveMatch(rIdx);
       }
       lastTapTime = now;
       lastTapTarget = targetId;
     }
 
-    // スコアモーダル表示
     function openScoreModal(rIdx, cIdx) {
       triggerVibration(20);
       targetScoreInfo = { rIdx, cIdx };
@@ -286,7 +370,6 @@
       document.getElementById('modalTitle').innerText = `第${rIdx+1}試合 (${court.courtNum}コート)`;
       document.getElementById('modalPair').innerText = `${court.p1}・${court.p2} vs ${court.p3}・${court.p4}`;
 
-      // スコアプルダウン生成 (0〜7)
       const scoreASelect = document.getElementById('scoreA');
       const scoreBSelect = document.getElementById('scoreB');
       scoreASelect.innerHTML = ''; scoreBSelect.innerHTML = '';
@@ -317,7 +400,6 @@
       closeModal();
     }
 
-    // LINE共有用テキスト作成
     function copyScheduleText() {
       triggerVibration(15);
       let text = "🎾【テニス乱数表】\n\n";
