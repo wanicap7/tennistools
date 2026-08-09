@@ -1,140 +1,10 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>テニス 乱数表アプリ</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      margin: 0; padding: 12px; background-color: #f2f2f7; color: #1c1c1e;
-      touch-action: manipulation;
-    }
-    h1 { font-size: 20px; text-align: center; margin: 5px 0 15px; }
-
-    /* 設定エリア */
-    .config-card {
-      background: white; border-radius: 12px; padding: 15px;
-      margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-    .config-row { display: flex; gap: 15px; margin-bottom: 10px; }
-    .config-group { flex: 1; text-align: left; }
-    .config-group label { display: block; font-size: 12px; color: #666; margin-bottom: 4px; font-weight: bold; }
-    .config-group select {
-      width: 100%; padding: 10px; font-size: 16px; border-radius: 8px;
-      border: 1px solid #ccc; background: #fafafa;
-    }
-    .btn-main {
-      width: 100%; padding: 12px; background: #007AFF; color: white; border: none;
-      border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
-    }
-    .btn-add {
-      width: 100%; padding: 12px; background: #FF9500; color: white; border: none;
-      border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px;
-    }
-    .btn-main:active, .btn-add:active { opacity: 0.8; }
-
-    /* 試合一覧エリア */
-    .match-card {
-      background: white; border-radius: 12px; padding: 12px; margin-bottom: 12px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 2px solid transparent;
-      transition: all 0.2s;
-    }
-    .match-card.active { border-color: #34C759; background-color: #f0fdf4; }
-    
-    .match-header {
-      display: flex; justify-content: space-between; align-items: center;
-      font-weight: bold; font-size: 14px; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px;
-    }
-    .active-badge { background: #34C759; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; }
-    
-    .court-grid { display: flex; flex-direction: column; gap: 8px; }
-    .court-box {
-      background: #f8f9fa; border-radius: 8px; padding: 8px 10px;
-      display: flex; justify-content: space-between; align-items: center;
-      border: 1px dashed #ccc; user-select: none;
-    }
-    .court-name { font-size: 12px; font-weight: bold; color: #555; width: 55px; }
-    .match-pair { font-size: 15px; font-weight: bold; flex: 1; text-align: center; }
-    .score-display {
-      font-size: 16px; font-weight: bold; color: #007AFF; width: 50px; text-align: right;
-    }
-
-    .rest-box { font-size: 12px; color: #8e8e93; margin-top: 6px; text-align: left; }
-
-    /* サブボタン */
-    .action-bar { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; margin-bottom: 30px; }
-    .btn-sub { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
-    .btn-copy { background: #34C759; color: white; }
-
-    /* モーダル (スコア入力) */
-    .modal-overlay {
-      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;
-    }
-    .modal {
-      background: white; padding: 20px; border-radius: 12px; width: 80%; max-width: 300px; text-align: center;
-    }
-    .modal-scores { display: flex; justify-content: space-around; margin: 20px 0; }
-    .modal-scores select { font-size: 20px; padding: 5px 10px; }
-  </style>
-</head>
-<body>
-
-  <h1>🎾 乱数表ジェネレーター</h1>
-
-  <div class="config-card">
-    <div class="config-row">
-      <div class="config-group">
-        <label>参加人数</label>
-        <select id="playerCount">
-          <!-- 4〜20人 (5人をデフォルト選択) -->
-        </select>
-      </div>
-      <div class="config-group">
-        <label>コート数</label>
-        <select id="courtCount">
-          <option value="1">1面 (4人打)</option>
-          <option value="2">2面 (8人打)</option>
-          <option value="3">3面 (12人打)</option>
-          <option value="4">4面 (16人打)</option>
-        </select>
-      </div>
-    </div>
-    <button class="btn-main" onclick="startNewSchedule()">乱数表を新規作成</button>
-  </div>
-
-  <div id="scheduleContainer"></div>
-
-  <div class="action-bar" id="actionBar" style="display:none;">
-    <button class="btn-add" onclick="appendMoreRounds()">＋ 続きの試合を追加生成する (8試合分)</button>
-    <button class="btn-sub btn-copy" onclick="copyScheduleText()">LINE用に共有テキスト保存</button>
-  </div>
-
-  <!-- スコア入力モーダル -->
-  <div class="modal-overlay" id="scoreModal">
-    <div class="modal">
-      <h3 id="modalTitle">スコア入力</h3>
-      <p id="modalPair" style="font-weight:bold;"></p>
-      <div class="modal-scores">
-        <select id="scoreA"></select>
-        <span style="font-size:20px; align-self:center;">-</span>
-        <select id="scoreB"></select>
-      </div>
-      <div style="display:flex; gap:10px;">
-        <button class="btn-sub" onclick="closeModal()" style="background:#8e8e93; color:white;">キャンセル</button>
-        <button class="btn-sub" onclick="saveScore()" style="background:#007AFF; color:white;">保存</button>
-      </div>
-    </div>
-  </div>
-
 <script>
-    // プルダウン初期化 (デフォルトで5人を選択状態に設定)
+    // プルダウン初期化 (デフォルト5人)
     const playerSelect = document.getElementById('playerCount');
     for (let i = 4; i <= 20; i++) {
       const opt = document.createElement('option');
       opt.value = i; opt.innerText = `${i} 人`;
-      if (i === 5) opt.selected = true; // デフォルト5人
+      if (i === 5) opt.selected = true;
       playerSelect.appendChild(opt);
     }
 
@@ -145,8 +15,9 @@
     // 平準化・ペア履歴用データ
     let playCounts = [];
     let restCounts = [];
-    let roundsSinceLastRest = []; // 前回休んでからの経過試合数
-    let restPairMatrix = [];      // 誰と誰が一緒に休んだかの記録
+    let roundsSinceLastRest = []; 
+    let restPairMatrix = [];      
+    let pairMatrix = [];          // ★追加: ペアを組んだ回数の記録
 
     function triggerVibration(ms = 15) {
       if ("vibrate" in navigator) navigator.vibrate(ms);
@@ -167,19 +38,17 @@
       restCounts = new Array(numPlayers + 1).fill(0);
       roundsSinceLastRest = new Array(numPlayers + 1).fill(99);
 
-      // 一緒に休んだ回数を記録する2次元配列を初期化
       restPairMatrix = Array.from({ length: numPlayers + 1 }, () => new Array(numPlayers + 1).fill(0));
+      pairMatrix = Array.from({ length: numPlayers + 1 }, () => new Array(numPlayers + 1).fill(0));
 
       generateRounds(8);
       document.getElementById('actionBar').style.display = 'flex';
     }
 
-    // 続きを追加生成
     function appendMoreRounds() {
       generateRounds(8);
     }
 
-    // 組み合わせの全列挙ヘルパー（休み候補用）
     function getCombinations(arr, k) {
       if (k === 0) return [[]];
       if (arr.length === 0) return [];
@@ -190,13 +59,41 @@
       return [...withHead, ...withoutHead];
     }
 
-    // 配列の完全シャッフル (フィッシャー–イェーツ)
     function shuffleArray(array) {
       for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [array[i], array[j]] = [array[j], array[i]];
       }
       return array;
+    }
+
+    // 4人から最もペア重複が少ない「ペア1 vs ペア2」の組み合わせを決める
+    function getBestCourtPairing(fourPlayers) {
+      // 4人の分け方は 3パターン（ (0,1 vs 2,3), (0,2 vs 1,3), (0,3 vs 1,2) ）
+      const patterns = [
+        { p1: fourPlayers[0], p2: fourPlayers[1], p3: fourPlayers[2], p4: fourPlayers[3] },
+        { p1: fourPlayers[0], p2: fourPlayers[2], p3: fourPlayers[1], p4: fourPlayers[3] },
+        { p1: fourPlayers[0], p3: fourPlayers[3], p2: fourPlayers[1], p4: fourPlayers[2] }
+      ];
+
+      let bestPattern = null;
+      let minScore = Infinity;
+
+      patterns.forEach(pt => {
+        // ペアを組んだ回数が少ないほどスコアが低い（優先される）
+        const pair1Count = pairMatrix[pt.p1][pt.p2];
+        const pair2Count = pairMatrix[pt.p3][pt.p4];
+        
+        // 重みを大きくしてペア被りを徹底回避
+        let score = (pair1Count * 100) + (pair2Count * 100) + (Math.random() * 5);
+
+        if (score < minScore) {
+          minScore = score;
+          bestPattern = pt;
+        }
+      });
+
+      return bestPattern;
     }
 
     // 試合生成ロジック
@@ -213,13 +110,13 @@
         let playingThisRound = [];
 
         if (currentRoundNum === 1) {
-          // 第1試合：1番から順に出場（後ろの番号が休み）
+          // 第1試合：1~4が出場（1・2 vs 3・4）
           playingThisRound = Array.from({ length: playersPerRound }, (_, i) => i + 1);
           for (let p = playersPerRound + 1; p <= numPlayers; p++) {
             restedThisRound.push(p);
           }
         } else {
-          // 第2試合以降：スコア計算で休みを選出
+          // 第2試合以降：休みを選出
           if (numResting === 0) {
             restedThisRound = [];
           } else {
@@ -231,16 +128,14 @@
               let score = 0;
               let invalid = false;
 
-              // ① 直前に休んだ人は絶対禁止（2連続休みの防止）
+              // ① 2連続休みの防止
               combo.forEach(p => {
-                if (roundsSinceLastRest[p] === 0) {
-                  invalid = true;
-                }
+                if (roundsSinceLastRest[p] === 0) invalid = true;
               });
 
               if (invalid) return;
 
-              // ② 個人の優先度スコア（連続出場数の多さを最優先）
+              // ② 出場機会の平準化
               combo.forEach(p => {
                 score += roundsSinceLastRest[p] * 120;
                 score -= restCounts[p] * 40;
@@ -255,9 +150,7 @@
                 }
               }
 
-              // ④ 乱数（同点時に展開をバラけさせる）
               score += Math.random() * 30;
-
               comboScores.push({ combo, score });
             });
 
@@ -271,10 +164,8 @@
             }
           }
 
-          // 出場プレイヤーの決定 & 2試合目以降はシャッフル
           playingThisRound = Array.from({ length: numPlayers }, (_, i) => i + 1)
                                   .filter(p => !restedThisRound.includes(p));
-          shuffleArray(playingThisRound);
         }
 
         // 状態更新
@@ -288,7 +179,7 @@
           }
         }
 
-        // 一緒に休んだ記録を計算
+        // 休みペア記録
         for (let i = 0; i < restedThisRound.length; i++) {
           for (let j = i + 1; j < restedThisRound.length; j++) {
             let p1 = restedThisRound[i];
@@ -298,13 +189,31 @@
           }
         }
 
-        // コート割り当て
+        // コート割り当て & 最適ペアリングの計算
         let courts = [];
+        let remainingPlaying = [...playingThisRound];
+
         for (let c = 0; c < numCourts; c++) {
-          let p = playingThisRound.slice(c * 4, c * 4 + 4);
+          let four = remainingPlaying.splice(0, 4);
+          let match = null;
+
+          if (currentRoundNum === 1 && c === 0) {
+            // 第1試合のAコートは 1・2 vs 3・4 に固定
+            match = { p1: four[0], p2: four[1], p3: four[2], p4: four[3] };
+          } else {
+            // 過去のペア履歴から最も新鮮なペアの組み方を選択！
+            match = getBestCourtPairing(four);
+          }
+
+          // ペア履歴（pairMatrix）の更新
+          pairMatrix[match.p1][match.p2]++;
+          pairMatrix[match.p2][match.p1]++;
+          pairMatrix[match.p3][match.p4]++;
+          pairMatrix[match.p4][match.p3]++;
+
           courts.push({
             courtNum: String.fromCharCode(65 + c),
-            p1: p[0], p2: p[1], p3: p[2], p4: p[3],
+            p1: match.p1, p2: match.p2, p3: match.p3, p4: match.p4,
             scoreA: '-', scoreB: '-'
           });
         }
@@ -359,7 +268,6 @@
       renderSchedule();
     }
 
-    // タップ・ダブルタップ制御
     let lastTapTime = 0;
     let lastTapTarget = null;
 
@@ -435,5 +343,3 @@
       });
     }
   </script>
-</body>
-</html>
