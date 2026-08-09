@@ -1,4 +1,299 @@
-<script>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>テニス乱数表ジェネレーター</title>
+  <style>
+    :root {
+      --primary: #007aff;
+      --bg: #f2f2f7;
+      --card-bg: #ffffff;
+      --text: #1c1c1e;
+      --sub-text: #8e8e93;
+      --border: #e5e5ea;
+      --active-bg: #eef6ff;
+      --active-border: #34c759;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 16px;
+      padding-bottom: 90px;
+    }
+
+    h1 {
+      font-size: 1.3rem;
+      text-align: center;
+      margin-top: 8px;
+      margin-bottom: 16px;
+    }
+
+    .config-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .form-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .form-group {
+      flex: 1;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--sub-text);
+      margin-bottom: 4px;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background-color: #fff;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #fff;
+      background-color: var(--primary);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .btn-primary:active {
+      opacity: 0.8;
+    }
+
+    .match-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      border: 2px solid transparent;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      transition: all 0.2s ease;
+    }
+
+    .match-card.active {
+      border-color: var(--active-border);
+      background-color: #fff;
+    }
+
+    .match-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+      font-size: 1.05rem;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+
+    .active-badge {
+      background: var(--active-border);
+      color: #fff;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .court-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .court-box {
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    .court-name {
+      font-size: 0.8rem;
+      color: var(--sub-text);
+      width: 60px;
+    }
+
+    .match-pair {
+      font-weight: bold;
+      flex: 1;
+      text-align: center;
+    }
+
+    .score-display {
+      width: 50px;
+      text-align: right;
+      color: var(--primary);
+      font-weight: bold;
+    }
+
+    .rest-box {
+      font-size: 0.85rem;
+      color: var(--sub-text);
+      margin-top: 8px;
+      text-align: right;
+    }
+
+    .action-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      padding: 12px 16px;
+      display: flex;
+      gap: 12px;
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    }
+
+    .action-bar button {
+      flex: 1;
+      padding: 10px;
+      font-size: 0.9rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .action-bar button.share-btn {
+      background: #34c759;
+      color: #fff;
+      border: none;
+    }
+
+    /* モーダル */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .modal {
+      background: #fff;
+      width: 85%;
+      max-width: 320px;
+      border-radius: 14px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .score-inputs {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .score-inputs select {
+      width: 70px;
+      font-size: 1.2rem;
+      text-align: center;
+    }
+
+    .modal-btns {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modal-btns button {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+    }
+
+    .modal-btns button.save {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🎾 乱数表ジェネレーター</h1>
+
+  <div class="config-card">
+    <div class="form-row">
+      <div class="form-group">
+        <label>参加人数</label>
+        <select id="playerCount"></select>
+      </div>
+      <div class="form-group">
+        <label>コート数</label>
+        <select id="courtCount">
+          <option value="1">1面 (4人打)</option>
+          <option value="2">2面 (8人打)</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="startNewSchedule()">乱数表を新規作成</button>
+  </div>
+
+  <div id="scheduleContainer"></div>
+
+  <div class="action-bar" id="actionBar" style="display: none;">
+    <button onclick="appendMoreRounds()">+ 8試合追加</button>
+    <button class="share-btn" onclick="copyScheduleText()">LINE用テキスト出力</button>
+  </div>
+
+  <!-- スコア入力モーダル -->
+  <div class="modal-overlay" id="scoreModal" style="display: none;">
+    <div class="modal">
+      <h3 id="modalTitle" style="margin-top: 0;"></h3>
+      <p id="modalPair" style="color: var(--sub-text); margin-bottom: 10px;"></p>
+      <div class="score-inputs">
+        <select id="scoreA"></select>
+        <span>-</span>
+        <select id="scoreB"></select>
+      </div>
+      <div class="modal-btns">
+        <button onclick="closeModal()">キャンセル</button>
+        <button class="save" onclick="saveScore()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
     // プルダウン初期化 (デフォルト5人)
     const playerSelect = document.getElementById('playerCount');
     for (let i = 4; i <= 20; i++) {
@@ -17,7 +312,7 @@
     let restCounts = [];
     let roundsSinceLastRest = []; 
     let restPairMatrix = [];      
-    let pairMatrix = [];          // ★追加: ペアを組んだ回数の記録
+    let pairMatrix = [];          // ペアを組んだ回数の記録
 
     function triggerVibration(ms = 15) {
       if ("vibrate" in navigator) navigator.vibrate(ms);
@@ -69,7 +364,6 @@
 
     // 4人から最もペア重複が少ない「ペア1 vs ペア2」の組み合わせを決める
     function getBestCourtPairing(fourPlayers) {
-      // 4人の分け方は 3パターン（ (0,1 vs 2,3), (0,2 vs 1,3), (0,3 vs 1,2) ）
       const patterns = [
         { p1: fourPlayers[0], p2: fourPlayers[1], p3: fourPlayers[2], p4: fourPlayers[3] },
         { p1: fourPlayers[0], p2: fourPlayers[2], p3: fourPlayers[1], p4: fourPlayers[3] },
@@ -80,11 +374,9 @@
       let minScore = Infinity;
 
       patterns.forEach(pt => {
-        // ペアを組んだ回数が少ないほどスコアが低い（優先される）
         const pair1Count = pairMatrix[pt.p1][pt.p2];
         const pair2Count = pairMatrix[pt.p3][pt.p4];
         
-        // 重みを大きくしてペア被りを徹底回避
         let score = (pair1Count * 100) + (pair2Count * 100) + (Math.random() * 5);
 
         if (score < minScore) {
@@ -343,3 +635,5 @@
       });
     }
   </script>
+</body>
+</html>
