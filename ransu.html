@@ -294,7 +294,6 @@
   </div>
 
   <script>
-    // プルダウン初期化 (デフォルト5人)
     const playerSelect = document.getElementById('playerCount');
     for (let i = 4; i <= 20; i++) {
       const opt = document.createElement('option');
@@ -303,22 +302,39 @@
       playerSelect.appendChild(opt);
     }
 
+    // 5人1面用の完全循環マスターテンプレート
+    const FIVE_PLAYER_MASTER = [
+      { p1: 1, p2: 2, p3: 3, p4: 4, rest: [5] },
+      { p1: 3, p2: 5, p3: 1, p4: 4, rest: [2] },
+      { p1: 2, p2: 4, p3: 1, p4: 5, rest: [3] },
+      { p1: 1, p2: 3, p3: 2, p4: 5, rest: [4] },
+      { p1: 4, p2: 5, p3: 2, p4: 3, rest: [1] }
+    ];
+
     let scheduleData = [];
     let activeMatchIndex = 0;
     let targetScoreInfo = null;
+    let fivePlayerMappings = [];
 
-    // 平準化・ペア履歴用データ
     let playCounts = [];
     let restCounts = [];
     let roundsSinceLastRest = []; 
     let restPairMatrix = [];      
-    let pairMatrix = [];          // ペアを組んだ回数の記録
+    let pairMatrix = [];          
 
     function triggerVibration(ms = 15) {
       if ("vibrate" in navigator) navigator.vibrate(ms);
     }
 
-    // 新規作成
+    function shuffleArray(array) {
+      let arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
     function startNewSchedule() {
       const numPlayers = parseInt(document.getElementById('playerCount').value);
       const numCourts = parseInt(document.getElementById('courtCount').value);
@@ -329,6 +345,8 @@
 
       scheduleData = [];
       activeMatchIndex = 0;
+      fivePlayerMappings = [];
+
       playCounts = new Array(numPlayers + 1).fill(0);
       restCounts = new Array(numPlayers + 1).fill(0);
       roundsSinceLastRest = new Array(numPlayers + 1).fill(99);
@@ -354,15 +372,6 @@
       return [...withHead, ...withoutHead];
     }
 
-    function shuffleArray(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
-    }
-
-    // 4人から最もペア重複が少ない「ペア1 vs ペア2」の組み合わせを決める
     function getBestCourtPairing(fourPlayers) {
       const patterns = [
         { p1: fourPlayers[0], p2: fourPlayers[1], p3: fourPlayers[2], p4: fourPlayers[3] },
@@ -376,8 +385,7 @@
       patterns.forEach(pt => {
         const pair1Count = pairMatrix[pt.p1][pt.p2];
         const pair2Count = pairMatrix[pt.p3][pt.p4];
-        
-        let score = (pair1Count * 100) + (pair2Count * 100) + (Math.random() * 5);
+        let score = (Math.pow(pair1Count, 2) * 1000) + (Math.pow(pair2Count, 2) * 1000) + (Math.random() * 5);
 
         if (score < minScore) {
           minScore = score;
@@ -388,11 +396,73 @@
       return bestPattern;
     }
 
-    // 試合生成ロジック
     function generateRounds(count) {
       triggerVibration(20);
       const numPlayers = parseInt(document.getElementById('playerCount').value);
       const numCourts = parseInt(document.getElementById('courtCount').value);
+
+      // --- 【5人1面】最低3試合出場保証・第1試合固定・周期シャッフル処理 ---
+      if (numPlayers === 5 && numCourts === 1) {
+        for (let r = 0; r < count; r++) {
+          const currentRoundNum = scheduleData.length + 1;
+          const cycleIndex = Math.floor((currentRoundNum - 1) / 5);
+          const templateIndex = (currentRoundNum - 1) % 5;
+
+          if (!fivePlayerMappings[cycleIndex]) {
+            if (cycleIndex === 0) {
+              // 1周目は固定
+              fivePlayerMappings[cycleIndex] = [1, 2, 3, 4, 5];
+            } else {
+              const prevMap = fivePlayerMappings[cycleIndex - 1];
+              let newMap;
+              let isValid = false;
+
+              // 休み明けに最低3試合出場（間隔4以上）を確保するまでシャッフル
+              do {
+                newMap = shuffleArray([1, 2, 3, 4, 5]);
+                isValid = true;
+
+                for (let p = 1; p <= 5; p++) {
+                  const prevRestIdx = prevMap.indexOf(p); // 前周期の休み位置 (0~4)
+                  const newRestIdx = newMap.indexOf(p);   // 新周期の休み位置 (0~4)
+
+                  // 前の休みから次の休みまでの合計試合数間隔
+                  const interval = (5 - prevRestIdx) + newRestIdx;
+                  if (interval < 4) { // 間に3試合プレイしない場合はNG
+                    isValid = false;
+                    break;
+                  }
+                }
+              } while (!isValid);
+
+              fivePlayerMappings[cycleIndex] = newMap;
+            }
+          }
+
+          const map = fivePlayerMappings[cycleIndex];
+          const tmpl = FIVE_PLAYER_MASTER[templateIndex];
+
+          const p1 = map[tmpl.p1 - 1];
+          const p2 = map[tmpl.p2 - 1];
+          const p3 = map[tmpl.p3 - 1];
+          const p4 = map[tmpl.p4 - 1];
+          const rest = tmpl.rest.map(id => map[id - 1]);
+
+          scheduleData.push({
+            round: currentRoundNum,
+            courts: [{
+              courtNum: 'A',
+              p1: p1, p2: p2, p3: p3, p4: p4,
+              scoreA: '-', scoreB: '-'
+            }],
+            rest: rest
+          });
+        }
+        renderSchedule();
+        return;
+      }
+
+      // --- 6人以上 / 2面運用時の動的アルゴリズム ---
       const playersPerRound = numCourts * 4;
       const numResting = numPlayers - playersPerRound;
 
@@ -402,13 +472,11 @@
         let playingThisRound = [];
 
         if (currentRoundNum === 1) {
-          // 第1試合：1~4が出場（1・2 vs 3・4）
           playingThisRound = Array.from({ length: playersPerRound }, (_, i) => i + 1);
           for (let p = playersPerRound + 1; p <= numPlayers; p++) {
             restedThisRound.push(p);
           }
         } else {
-          // 第2試合以降：休みを選出
           if (numResting === 0) {
             restedThisRound = [];
           } else {
@@ -420,20 +488,30 @@
               let score = 0;
               let invalid = false;
 
-              // ① 2連続休みの防止
+              // 過去3試合以内に休んだ人は原則除外（最低3試合連続出場）
               combo.forEach(p => {
-                if (roundsSinceLastRest[p] === 0) invalid = true;
+                if (roundsSinceLastRest[p] < 3) invalid = true;
               });
 
               if (invalid) return;
 
-              // ② 出場機会の平準化
               combo.forEach(p => {
                 score += roundsSinceLastRest[p] * 120;
                 score -= restCounts[p] * 40;
               });
 
-              // ③ 休みペアの重複禁止ペナルティ
+              let playingCandidates = allPlayers.filter(p => !combo.includes(p));
+              let pairDuplicationPenalty = 0;
+
+              for (let i = 0; i < playingCandidates.length; i++) {
+                for (let j = i + 1; j < playingCandidates.length; j++) {
+                  let p1 = playingCandidates[i];
+                  let p2 = playingCandidates[j];
+                  pairDuplicationPenalty += Math.pow(pairMatrix[p1][p2], 2) * 500;
+                }
+              }
+              score -= pairDuplicationPenalty;
+
               for (let i = 0; i < combo.length; i++) {
                 for (let j = i + 1; j < combo.length; j++) {
                   let p1 = combo[i];
@@ -442,7 +520,7 @@
                 }
               }
 
-              score += Math.random() * 30;
+              score += Math.random() * 10;
               comboScores.push({ combo, score });
             });
 
@@ -450,8 +528,8 @@
               comboScores.sort((a, b) => b.score - a.score);
               restedThisRound = comboScores[0].combo;
             } else {
-              let candidates = allPlayers.filter(p => roundsSinceLastRest[p] > 0);
-              shuffleArray(candidates);
+              // 該当候補がない場合、最も出場間隔が空いている人から選出
+              let candidates = [...allPlayers].sort((a, b) => roundsSinceLastRest[b] - roundsSinceLastRest[a]);
               restedThisRound = candidates.slice(0, numResting);
             }
           }
@@ -460,7 +538,6 @@
                                   .filter(p => !restedThisRound.includes(p));
         }
 
-        // 状態更新
         for (let p = 1; p <= numPlayers; p++) {
           if (restedThisRound.includes(p)) {
             restCounts[p]++;
@@ -471,7 +548,6 @@
           }
         }
 
-        // 休みペア記録
         for (let i = 0; i < restedThisRound.length; i++) {
           for (let j = i + 1; j < restedThisRound.length; j++) {
             let p1 = restedThisRound[i];
@@ -481,7 +557,6 @@
           }
         }
 
-        // コート割り当て & 最適ペアリングの計算
         let courts = [];
         let remainingPlaying = [...playingThisRound];
 
@@ -490,14 +565,11 @@
           let match = null;
 
           if (currentRoundNum === 1 && c === 0) {
-            // 第1試合のAコートは 1・2 vs 3・4 に固定
             match = { p1: four[0], p2: four[1], p3: four[2], p4: four[3] };
           } else {
-            // 過去のペア履歴から最も新鮮なペアの組み方を選択！
             match = getBestCourtPairing(four);
           }
 
-          // ペア履歴（pairMatrix）の更新
           pairMatrix[match.p1][match.p2]++;
           pairMatrix[match.p2][match.p1]++;
           pairMatrix[match.p3][match.p4]++;
@@ -520,7 +592,6 @@
       renderSchedule();
     }
 
-    // 画面描画
     function renderSchedule() {
       const container = document.getElementById('scheduleContainer');
       container.innerHTML = '';
