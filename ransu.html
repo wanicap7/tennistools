@@ -22,7 +22,7 @@
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      user-select: none; /* スマホでの誤選択防止 */
+      user-select: none;
     }
 
     body {
@@ -226,7 +226,6 @@
       font-weight: bold;
     }
 
-    /* エラー・警告 */
     .error-msg {
       color: #d32f2f;
       font-size: 0.85rem;
@@ -234,7 +233,6 @@
       display: none;
     }
 
-    /* フェアネスダッシュボード */
     .stats-card {
       background: #fafafa;
       border: 1px dashed #ccc;
@@ -257,7 +255,6 @@
       gap: 6px;
     }
 
-    /* モーダルダイアログ (スコア入力) */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -394,14 +391,11 @@
   <div id="toast" class="toast">クリップボードにコピーしました！</div>
 
   <script>
-    // ==========================================
-    // 定数・グローバル状態
-    // ==========================================
     let state = {
       playerCount: 5,
       courtCount: 1,
-      selectedIndex: null, // タップ選択中の試合Index
-      matches: [],         // 生成された全試合データ [{rests:[], courts:[{pair1, pair2, score1, score2}]}]
+      selectedIndex: null,
+      matches: [],
       stats: {
         playCounts: {},
         restCounts: {},
@@ -418,11 +412,9 @@
       }
     };
 
-    // ダブルタップ検知用
     let lastTapTime = 0;
     let lastTapMatchIdx = null;
 
-    // UI要素初期化
     document.addEventListener('DOMContentLoaded', () => {
       const pSelect = document.getElementById('playerCount');
       for (let i = 4; i <= 20; i++) {
@@ -431,7 +423,7 @@
         opt.textContent = `${i}人`;
         pSelect.appendChild(opt);
       }
-      pSelect.value = 6;
+      pSelect.value = 5;
 
       pSelect.addEventListener('change', validateSettings);
       document.getElementById('courtCount').addEventListener('change', validateSettings);
@@ -453,9 +445,6 @@
       }
     }
 
-    // ==========================================
-    // ユーティリティ
-    // ==========================================
     function getPairKey(a, b) {
       return a < b ? `${a}-${b}` : `${b}-${a}`;
     }
@@ -483,9 +472,6 @@
       ];
     }
 
-    // ==========================================
-    // 新規・追加生成
-    // ==========================================
     function generateNewSchedule() {
       if (!validateSettings()) return;
 
@@ -498,7 +484,6 @@
       state.selectedIndex = null;
       resetStats();
 
-      // 初期8試合生成
       generateMatches(8);
 
       document.getElementById('btnAddMatches').disabled = false;
@@ -546,7 +531,6 @@
         const matchIndex = state.matches.length;
         let bestMatch;
 
-        // ★要件：最初の試合のAコートは必ず1・2 vs 3・4に固定
         if (matchIndex === 0) {
           bestMatch = generateFirstFixedMatch();
         } else {
@@ -558,46 +542,32 @@
       }
     }
 
-    // 第1試合を「1・2 vs 3・4」固定で生成する関数
     function generateFirstFixedMatch() {
       const N = state.playerCount;
       const C = state.courtCount;
       const allPlayers = Array.from({ length: N }, (_, i) => i + 1);
 
-      // Aコート固定: pair1=[1,2], pair2=[3,4]
       const court1 = { pair1: [1, 2], pair2: [3, 4] };
 
       if (C === 1) {
-        // 1面の場合：残り全員が休憩
         const rests = allPlayers.filter(x => x > 4);
-        return {
-          rests: rests,
-          courts: [court1]
-        };
+        return { rests: rests, courts: [court1] };
       } else {
-        // 2面の場合：出場者(8人)から1,2,3,4を除いた残りのプレイヤーから4人選んでBコートへ
         const remainingForCourt2 = allPlayers.filter(x => x > 4);
         const court2Groups = combinations(remainingForCourt2, 4);
-        
-        // ランダムに1つBコートグループを選択
         const selectedC2 = court2Groups[Math.floor(Math.random() * court2Groups.length)];
         const c2Set = new Set(selectedC2);
         
-        // Bコートのペアリングを1つランダム選択
         const c2Pairings = getPairingsFor4(selectedC2);
         const selectedC2Pairing = c2Pairings[Math.floor(Math.random() * c2Pairings.length)];
         
         const court2 = { pair1: selectedC2Pairing.pair1, pair2: selectedC2Pairing.pair2 };
         const rests = remainingForCourt2.filter(x => !c2Set.has(x));
 
-        return {
-          rests: rests,
-          courts: [court1, court2]
-        };
+        return { rests: rests, courts: [court1, court2] };
       }
     }
 
-    // 次の1試合の最適な割り当てを探索・生成
     function generateBestNextMatch(matchIndex) {
       const N = state.playerCount;
       const C = state.courtCount;
@@ -658,7 +628,6 @@
       return selected.match;
     }
 
-    // 評価関数
     function evaluateMatchCandidate(match, matchIndex) {
       let penalty = 0;
       const st = state.stats;
@@ -666,21 +635,30 @@
       const rests = match.rests;
       const restsSet = new Set(rests);
 
-      // 1. 連続休憩ペナルティ
+      // --- 厳格な休憩平準化チェック ---
+      // 現時点での最小休憩数を取得
+      const currentRestVals = Object.values(st.restCounts);
+      const minRest = Math.min(...currentRestVals);
+
       for (let r of rests) {
+        // 1. 連続休憩の絶対禁止
         if (st.lastRest[r] === matchIndex - 1) {
-          penalty += 10000;
+          penalty += 100000;
+        }
+
+        // 2. まだ最小休憩回数に達していない人がいるのに、先に2回目以上の休憩に入るのを強力に抑止
+        if ((st.restCounts[r] || 0) > minRest) {
+          penalty += 50000;
         }
       }
 
-      // 2. 休憩・出場回数の偏り評価
+      // 3. 全員の休憩回数の差を二乗ペナルティで均等化
       for (let i = 1; i <= N; i++) {
         let hypotheticalRest = (st.restCounts[i] || 0) + (restsSet.has(i) ? 1 : 0);
-        penalty += Math.pow(hypotheticalRest, 2) * 50;
-        penalty -= hypotheticalRest * 10;
+        penalty += Math.pow(hypotheticalRest, 3) * 500;
       }
 
-      // 3. 休憩ペア重複評価
+      // 4. 休憩ペア重複評価
       if (rests.length > 1) {
         const restGroupKey = getGroupKey(rests);
         const prevRestGroupCount = st.restGroupCounts[restGroupKey] || 0;
@@ -694,7 +672,7 @@
         }
       }
 
-      // 4. ペアリング＆コート・対戦相手の評価
+      // 5. ペアリング＆コート・対戦相手の評価
       for (let court of match.courts) {
         const pairs = [court.pair1, court.pair2];
         for (let pair of pairs) {
@@ -703,7 +681,7 @@
           const lastMatch = st.lastPairMatch[pKey];
 
           if (currentPairCount === 0) {
-            penalty -= 800; // 未使用ペアの強優先ボーナス
+            penalty -= 800;
           } else {
             penalty += Math.pow(currentPairCount, 2) * 400;
           }
@@ -781,9 +759,6 @@
       }
     }
 
-    // ==========================================
-    // UI 描画 & インタラクション (タップ / ダブルタップ)
-    // ==========================================
     function renderUI() {
       const container = document.getElementById('matchesContainer');
       container.innerHTML = '';
@@ -792,7 +767,6 @@
         const card = document.createElement('div');
         card.className = `match-card ${state.selectedIndex === idx ? 'selected' : ''}`;
 
-        // タップ/ダブルタップ イベントハンドラ
         card.addEventListener('click', (e) => handleMatchCardClick(idx));
 
         let html = `<div class="match-header">
@@ -830,16 +804,13 @@
       });
     }
 
-    // タップ & ダブルタップ判定処理
     function handleMatchCardClick(idx) {
       const currentTime = new Date().getTime();
       const tapLength = currentTime - lastTapTime;
 
-      // シングルタップ処理 (選択状態切替)
       state.selectedIndex = (state.selectedIndex === idx) ? null : idx;
       renderUI();
 
-      // ダブルタップ処理 (300ms以内の連続タップ)
       if (lastTapMatchIdx === idx && tapLength < 300 && tapLength > 0) {
         openScoreModal(idx);
       }
@@ -848,9 +819,6 @@
       lastTapMatchIdx = idx;
     }
 
-    // ==========================================
-    // モーダル (スコア入力)
-    // ==========================================
     let activeModalMatchIdx = null;
 
     function openScoreModal(idx) {
@@ -901,9 +869,6 @@
       renderUI();
     }
 
-    // ==========================================
-    // LINE出力・コピー
-    // ==========================================
     function copyToClipboard() {
       let text = `🎾【テニス乱数表】\n\n`;
 
@@ -938,9 +903,6 @@
       }, 2000);
     }
 
-    // ==========================================
-    // 公平性ダッシュボード・検証
-    // ==========================================
     function verifyAndLogFairness() {
       const st = state.stats;
       const N = state.playerCount;
