@@ -2,708 +2,1005 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>テニス乱数表ジェネレーター</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>テニスダブルス公平乱数表ジェネレーター</title>
   <style>
     :root {
-      --primary: #007aff;
-      --bg: #f2f2f7;
+      --primary-color: #2e7d32;
+      --primary-hover: #1b5e20;
+      --bg-color: #f4f6f8;
       --card-bg: #ffffff;
-      --text: #1c1c1e;
-      --sub-text: #8e8e93;
-      --border: #e5e5ea;
-      --active-bg: #eef6ff;
-      --active-border: #34c759;
+      --text-color: #333333;
+      --accent-color: #e65100;
+      --border-color: #e0e0e0;
+      --selected-border: #4caf50;
+      --selected-bg: #f1f8e9;
     }
 
     * {
       box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      user-select: none; /* スマホでの誤選択防止 */
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
-      margin: 0;
-      padding: 16px;
-      padding-bottom: 90px;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      padding: 12px;
+      max-width: 600px;
+      margin: 0 auto;
+      padding-bottom: 40px;
     }
 
     h1 {
-      font-size: 1.3rem;
       text-align: center;
-      margin-top: 8px;
+      font-size: 1.4rem;
       margin-bottom: 16px;
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
 
-    .config-card {
+    .card {
       background: var(--card-bg);
       border-radius: 12px;
       padding: 16px;
       margin-bottom: 16px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border: 1px solid var(--border-color);
     }
 
-    .form-row {
-      display: flex;
+    .setting-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    .form-group {
-      flex: 1;
+      margin-bottom: 16px;
     }
 
     label {
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: #555;
       display: block;
-      font-size: 0.8rem;
-      color: var(--sub-text);
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
 
     select {
       width: 100%;
       padding: 10px;
-      font-size: 1rem;
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-color);
       border-radius: 8px;
-      background-color: #fff;
+      font-size: 1rem;
+      background-color: #fafafa;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    button:active {
+      transform: scale(0.98);
     }
 
     .btn-primary {
-      width: 100%;
-      padding: 12px;
-      font-size: 1rem;
-      font-weight: bold;
-      color: #fff;
-      background-color: var(--primary);
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
+      background-color: var(--primary-color);
+      color: white;
     }
 
-    .btn-primary:active {
-      opacity: 0.8;
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
     }
 
+    .btn-secondary {
+      background-color: #0288d1;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background-color: #01579b;
+    }
+
+    .btn-copy {
+      background-color: #ff9800;
+      color: white;
+      margin-top: 8px;
+    }
+
+    /* 試合カード */
     .match-card {
       background: var(--card-bg);
       border-radius: 12px;
-      padding: 12px 16px;
+      padding: 14px;
       margin-bottom: 12px;
-      border: 2px solid transparent;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      border-left: 5px solid var(--primary-color);
+      border-right: 2px solid transparent;
+      border-top: 2px solid transparent;
+      border-bottom: 2px solid transparent;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+      cursor: pointer;
       transition: all 0.2s ease;
+      touch-action: manipulation;
     }
 
-    .match-card.active {
-      border-color: var(--active-border);
-      background-color: #fff;
+    .match-card.selected {
+      background-color: var(--selected-bg);
+      border-color: var(--selected-border);
+      border-left-width: 6px;
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.25);
     }
 
     .match-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
       font-weight: bold;
       font-size: 1.05rem;
       margin-bottom: 8px;
-      cursor: pointer;
-    }
-
-    .active-badge {
-      background: var(--active-border);
-      color: #fff;
-      font-size: 0.75rem;
-      padding: 2px 8px;
-      border-radius: 10px;
-    }
-
-    .court-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .court-box {
-      background: var(--bg);
-      border-radius: 8px;
-      padding: 8px 12px;
+      color: var(--primary-color);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      border-bottom: 1px solid #f0f0f0;
+      padding-bottom: 4px;
+    }
+
+    .match-hint {
+      font-size: 0.72rem;
+      color: #888;
+      font-weight: normal;
+    }
+
+    .court-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .court-box {
+      background-color: #f9fbe7;
+      border: 1px solid #c0ca33;
+      border-radius: 6px;
+      padding: 8px 12px;
       font-size: 0.95rem;
-      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .court-info {
+      display: flex;
+      align-items: center;
     }
 
     .court-name {
-      font-size: 0.8rem;
-      color: var(--sub-text);
-      width: 60px;
+      font-weight: bold;
+      color: #33691e;
+      margin-right: 8px;
     }
 
-    .match-pair {
+    .vs-text {
+      color: #d32f2f;
       font-weight: bold;
-      flex: 1;
-      text-align: center;
+      margin: 0 6px;
     }
 
-    .score-display {
-      width: 50px;
-      text-align: right;
-      color: var(--primary);
+    .player-tag {
+      display: inline-block;
+      background: #e8f5e9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .score-badge {
+      background: #333;
+      color: #fff;
       font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.85rem;
     }
 
     .rest-box {
-      font-size: 0.85rem;
-      color: var(--sub-text);
-      margin-top: 8px;
-      text-align: right;
-    }
-
-    .action-bar {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: rgba(255, 255, 255, 0.9);
-      backdrop-filter: blur(10px);
-      padding: 12px 16px;
-      display: flex;
-      gap: 12px;
-      border-top: 1px solid var(--border);
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-    }
-
-    .action-bar button {
-      flex: 1;
-      padding: 10px;
-      font-size: 0.9rem;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: #fff;
+      background-color: #fff3e0;
+      border: 1px solid #ffe0b2;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 0.88rem;
+      color: var(--accent-color);
       font-weight: bold;
-      cursor: pointer;
     }
 
-    .action-bar button.share-btn {
-      background: #34c759;
-      color: #fff;
-      border: none;
+    /* エラー・警告 */
+    .error-msg {
+      color: #d32f2f;
+      font-size: 0.85rem;
+      margin-top: 4px;
+      display: none;
     }
 
-    /* モーダル */
+    /* フェアネスダッシュボード */
+    .stats-card {
+      background: #fafafa;
+      border: 1px dashed #ccc;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 0.82rem;
+      color: #444;
+      margin-top: 16px;
+    }
+
+    .stats-title {
+      font-weight: bold;
+      margin-bottom: 6px;
+      color: #333;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    /* モーダルダイアログ (スコア入力) */
     .modal-overlay {
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.4);
-      display: flex;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
       justify-content: center;
       align-items: center;
-      z-index: 100;
+      z-index: 2000;
     }
 
-    .modal {
-      background: #fff;
-      width: 85%;
-      max-width: 320px;
-      border-radius: 14px;
+    .modal-content {
+      background: white;
+      border-radius: 12px;
       padding: 20px;
-      text-align: center;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+
+    .modal-title {
+      font-weight: bold;
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      color: var(--primary-color);
+    }
+
+    .score-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .score-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f5f5f5;
+      padding: 8px 12px;
+      border-radius: 8px;
     }
 
     .score-inputs {
       display: flex;
-      justify-content: center;
       align-items: center;
-      gap: 12px;
-      margin: 20px 0;
+      gap: 6px;
     }
 
-    .score-inputs select {
-      width: 70px;
-      font-size: 1.2rem;
+    .score-inputs input {
+      width: 45px;
+      height: 38px;
       text-align: center;
+      font-size: 1.1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
     }
 
-    .modal-btns {
+    .modal-actions {
       display: flex;
       gap: 10px;
     }
 
-    .modal-btns button {
-      flex: 1;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: #fff;
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      display: none;
+      z-index: 3000;
     }
 
-    .modal-btns button.save {
-      background: var(--primary);
-      color: #fff;
-      border: none;
+    .collapsible-trigger {
+      cursor: pointer;
+      color: var(--primary-color);
+      text-decoration: underline;
+      font-size: 0.85rem;
+      margin-top: 8px;
+      display: inline-block;
     }
   </style>
 </head>
 <body>
 
-  <h1>🎾 乱数表ジェネレーター</h1>
+  <h1>🎾 テニス乱数表ジェネレーター</h1>
 
-  <div class="config-card">
-    <div class="form-row">
-      <div class="form-group">
-        <label>参加人数</label>
+  <div class="card">
+    <div class="setting-group">
+      <div>
+        <label for="playerCount">参加人数</label>
         <select id="playerCount"></select>
       </div>
-      <div class="form-group">
-        <label>コート数</label>
+      <div>
+        <label for="courtCount">コート数</label>
         <select id="courtCount">
-          <option value="1">1面 (4人打)</option>
-          <option value="2">2面 (8人打)</option>
+          <option value="1">1面 (4人出場)</option>
+          <option value="2">2面 (8人出場)</option>
         </select>
       </div>
     </div>
-    <button class="btn-primary" onclick="startNewSchedule()">乱数表を新規作成</button>
+    <div id="errorMsg" class="error-msg"></div>
+
+    <div class="btn-group">
+      <button class="btn-primary" onclick="generateNewSchedule()">新規乱数表を作成</button>
+      <button id="btnAddMatches" class="btn-secondary" onclick="addMoreMatches(8)" disabled>+8試合追加</button>
+      <button id="btnCopy" class="btn-copy" onclick="copyToClipboard()" disabled>LINE用にテキストコピー</button>
+    </div>
   </div>
 
-  <div id="scheduleContainer"></div>
+  <div id="matchesContainer"></div>
 
-  <div class="action-bar" id="actionBar" style="display: none;">
-    <button onclick="appendMoreRounds()">+ 8試合追加</button>
-    <button class="share-btn" onclick="copyScheduleText()">LINE用テキスト出力</button>
+  <div id="statsCard" class="stats-card" style="display: none;">
+    <div class="stats-title">📊 公平性リアルタイム検証</div>
+    <div id="statsContent" class="stats-grid"></div>
+    <span class="collapsible-trigger" onclick="consoleLogDetails()">コンソールに詳細ログを出力</span>
   </div>
 
-  <!-- スコア入力モーダル -->
-  <div class="modal-overlay" id="scoreModal" style="display: none;">
-    <div class="modal">
-      <h3 id="modalTitle" style="margin-top: 0;"></h3>
-      <p id="modalPair" style="color: var(--sub-text); margin-bottom: 10px;"></p>
-      <div class="score-inputs">
-        <select id="scoreA"></select>
-        <span>-</span>
-        <select id="scoreB"></select>
-      </div>
-      <div class="modal-btns">
-        <button onclick="closeModal()">キャンセル</button>
-        <button class="save" onclick="saveScore()">保存</button>
+  <!-- スコア入力Modal -->
+  <div id="scoreModal" class="modal-overlay">
+    <div class="modal-content">
+      <div id="modalTitle" class="modal-title">スコア入力 (第1試合)</div>
+      <div id="modalScoreInputs" class="score-input-group"></div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="saveScores()">保存</button>
+        <button style="background:#e0e0e0; color:#333;" onclick="closeScoreModal()">キャンセル</button>
       </div>
     </div>
   </div>
 
+  <div id="toast" class="toast">クリップボードにコピーしました！</div>
+
   <script>
-    const playerSelect = document.getElementById('playerCount');
-    for (let i = 4; i <= 20; i++) {
-      const opt = document.createElement('option');
-      opt.value = i; opt.innerText = `${i} 人`;
-      if (i === 5) opt.selected = true;
-      playerSelect.appendChild(opt);
-    }
-
-    // 5人1面用の完全循環マスターテンプレート
-    const FIVE_PLAYER_MASTER = [
-      { p1: 1, p2: 2, p3: 3, p4: 4, rest: [5] },
-      { p1: 3, p2: 5, p3: 1, p4: 4, rest: [2] },
-      { p1: 2, p2: 4, p3: 1, p4: 5, rest: [3] },
-      { p1: 1, p2: 3, p3: 2, p4: 5, rest: [4] },
-      { p1: 4, p2: 5, p3: 2, p4: 3, rest: [1] }
-    ];
-
-    let scheduleData = [];
-    let activeMatchIndex = 0;
-    let targetScoreInfo = null;
-    let fivePlayerMappings = [];
-
-    let playCounts = [];
-    let restCounts = [];
-    let roundsSinceLastRest = []; 
-    let restPairMatrix = [];      
-    let pairMatrix = [];          
-
-    function triggerVibration(ms = 15) {
-      if ("vibrate" in navigator) navigator.vibrate(ms);
-    }
-
-    function shuffleArray(array) {
-      let arr = [...array];
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
+    // ==========================================
+    // 定数・グローバル状態
+    // ==========================================
+    let state = {
+      playerCount: 6,
+      courtCount: 1,
+      selectedIndex: null, // タップ選択中の試合Index
+      matches: [],         // 生成された全試合データ [{rests:[], courts:[{pair1, pair2, score1, score2}]}]
+      stats: {
+        playCounts: {},
+        restCounts: {},
+        consecutiveRest: {},
+        pairCounts: {},
+        opponentCounts: {},
+        group4Counts: {},
+        restGroupCounts: {},
+        restPairCounts: {},
+        lastPlayed: {},
+        lastRest: {},
+        lastPairMatch: {},
+        lastGroup4Match: {}
       }
-      return arr;
-    }
+    };
 
-    function startNewSchedule() {
-      const numPlayers = parseInt(document.getElementById('playerCount').value);
-      const numCourts = parseInt(document.getElementById('courtCount').value);
-      if (numPlayers < numCourts * 4) {
-        alert(`${numCourts}面でプレイするには最低 ${numCourts * 4}人 必要です。`);
-        return;
+    // ダブルタップ検知用
+    let lastTapTime = 0;
+    let lastTapMatchIdx = null;
+
+    // UI要素初期化
+    document.addEventListener('DOMContentLoaded', () => {
+      const pSelect = document.getElementById('playerCount');
+      for (let i = 4; i <= 20; i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = `${i}人`;
+        pSelect.appendChild(opt);
       }
+      pSelect.value = 6;
 
-      scheduleData = [];
-      activeMatchIndex = 0;
-      fivePlayerMappings = [];
+      pSelect.addEventListener('change', validateSettings);
+      document.getElementById('courtCount').addEventListener('change', validateSettings);
+      validateSettings();
+    });
 
-      playCounts = new Array(numPlayers + 1).fill(0);
-      restCounts = new Array(numPlayers + 1).fill(0);
-      roundsSinceLastRest = new Array(numPlayers + 1).fill(99);
+    function validateSettings() {
+      const p = parseInt(document.getElementById('playerCount').value);
+      const c = parseInt(document.getElementById('courtCount').value);
+      const err = document.getElementById('errorMsg');
 
-      restPairMatrix = Array.from({ length: numPlayers + 1 }, () => new Array(numPlayers + 1).fill(0));
-      pairMatrix = Array.from({ length: numPlayers + 1 }, () => new Array(numPlayers + 1).fill(0));
-
-      generateRounds(8);
-      document.getElementById('actionBar').style.display = 'flex';
+      if (p < c * 4) {
+        err.textContent = `※ ${c}面でプレイするには最低${c * 4}人必要です。`;
+        err.style.display = 'block';
+        return false;
+      } else {
+        err.style.display = 'none';
+        return true;
+      }
     }
 
-    function appendMoreRounds() {
-      generateRounds(8);
+    // ==========================================
+    // ユーティリティ
+    // ==========================================
+    function getPairKey(a, b) {
+      return a < b ? `${a}-${b}` : `${b}-${a}`;
     }
 
-    function getCombinations(arr, k) {
+    function getGroupKey(arr) {
+      return [...arr].sort((a, b) => a - b).join('-');
+    }
+
+    function combinations(arr, k) {
       if (k === 0) return [[]];
       if (arr.length === 0) return [];
       const head = arr[0];
       const tail = arr.slice(1);
-      const withHead = getCombinations(tail, k - 1).map(c => [head, ...c]);
-      const withoutHead = getCombinations(tail, k);
+      const withHead = combinations(tail, k - 1).map(c => [head, ...c]);
+      const withoutHead = combinations(tail, k);
       return [...withHead, ...withoutHead];
     }
 
-    function getBestCourtPairing(fourPlayers) {
-      const patterns = [
-        { p1: fourPlayers[0], p2: fourPlayers[1], p3: fourPlayers[2], p4: fourPlayers[3] },
-        { p1: fourPlayers[0], p2: fourPlayers[2], p3: fourPlayers[1], p4: fourPlayers[3] },
-        { p1: fourPlayers[0], p3: fourPlayers[3], p2: fourPlayers[1], p4: fourPlayers[2] }
+    function getPairingsFor4(players4) {
+      const [a, b, c, d] = players4;
+      return [
+        { pair1: [a, b], pair2: [c, d] },
+        { pair1: [a, c], pair2: [b, d] },
+        { pair1: [a, d], pair2: [b, c] }
       ];
-
-      let bestPattern = null;
-      let minScore = Infinity;
-
-      patterns.forEach(pt => {
-        const pair1Count = pairMatrix[pt.p1][pt.p2];
-        const pair2Count = pairMatrix[pt.p3][pt.p4];
-        let score = (Math.pow(pair1Count, 2) * 1000) + (Math.pow(pair2Count, 2) * 1000) + (Math.random() * 5);
-
-        if (score < minScore) {
-          minScore = score;
-          bestPattern = pt;
-        }
-      });
-
-      return bestPattern;
     }
 
-    function generateRounds(count) {
-      triggerVibration(20);
-      const numPlayers = parseInt(document.getElementById('playerCount').value);
-      const numCourts = parseInt(document.getElementById('courtCount').value);
+    // ==========================================
+    // 新規・追加生成
+    // ==========================================
+    function generateNewSchedule() {
+      if (!validateSettings()) return;
 
-      // --- 【5人1面】最低3試合出場保証・第1試合固定・周期シャッフル処理 ---
-      if (numPlayers === 5 && numCourts === 1) {
-        for (let r = 0; r < count; r++) {
-          const currentRoundNum = scheduleData.length + 1;
-          const cycleIndex = Math.floor((currentRoundNum - 1) / 5);
-          const templateIndex = (currentRoundNum - 1) % 5;
+      const p = parseInt(document.getElementById('playerCount').value);
+      const c = parseInt(document.getElementById('courtCount').value);
 
-          if (!fivePlayerMappings[cycleIndex]) {
-            if (cycleIndex === 0) {
-              // 1周目は固定
-              fivePlayerMappings[cycleIndex] = [1, 2, 3, 4, 5];
-            } else {
-              const prevMap = fivePlayerMappings[cycleIndex - 1];
-              let newMap;
-              let isValid = false;
+      state.playerCount = p;
+      state.courtCount = c;
+      state.matches = [];
+      state.selectedIndex = null;
+      resetStats();
 
-              // 休み明けに最低3試合出場（間隔4以上）を確保するまでシャッフル
-              do {
-                newMap = shuffleArray([1, 2, 3, 4, 5]);
-                isValid = true;
+      // 初期8試合生成
+      generateMatches(8);
 
-                for (let p = 1; p <= 5; p++) {
-                  const prevRestIdx = prevMap.indexOf(p); // 前周期の休み位置 (0~4)
-                  const newRestIdx = newMap.indexOf(p);   // 新周期の休み位置 (0~4)
+      document.getElementById('btnAddMatches').disabled = false;
+      document.getElementById('btnCopy').disabled = false;
+      document.getElementById('statsCard').style.display = 'block';
 
-                  // 前の休みから次の休みまでの合計試合数間隔
-                  const interval = (5 - prevRestIdx) + newRestIdx;
-                  if (interval < 4) { // 間に3試合プレイしない場合はNG
-                    isValid = false;
-                    break;
-                  }
-                }
-              } while (!isValid);
+      renderUI();
+      verifyAndLogFairness();
+    }
 
-              fivePlayerMappings[cycleIndex] = newMap;
-            }
-          }
+    function addMoreMatches(count = 8) {
+      generateMatches(count);
+      renderUI();
+      verifyAndLogFairness();
+    }
 
-          const map = fivePlayerMappings[cycleIndex];
-          const tmpl = FIVE_PLAYER_MASTER[templateIndex];
+    function resetStats() {
+      const p = state.playerCount;
+      state.stats = {
+        playCounts: {},
+        restCounts: {},
+        consecutiveRest: {},
+        pairCounts: {},
+        opponentCounts: {},
+        group4Counts: {},
+        restGroupCounts: {},
+        restPairCounts: {},
+        lastPlayed: {},
+        lastRest: {},
+        lastPairMatch: {},
+        lastGroup4Match: {}
+      };
 
-          const p1 = map[tmpl.p1 - 1];
-          const p2 = map[tmpl.p2 - 1];
-          const p3 = map[tmpl.p3 - 1];
-          const p4 = map[tmpl.p4 - 1];
-          const rest = tmpl.rest.map(id => map[id - 1]);
-
-          scheduleData.push({
-            round: currentRoundNum,
-            courts: [{
-              courtNum: 'A',
-              p1: p1, p2: p2, p3: p3, p4: p4,
-              scoreA: '-', scoreB: '-'
-            }],
-            rest: rest
-          });
-        }
-        renderSchedule();
-        return;
+      for (let i = 1; i <= p; i++) {
+        state.stats.playCounts[i] = 0;
+        state.stats.restCounts[i] = 0;
+        state.stats.consecutiveRest[i] = 0;
+        state.stats.lastPlayed[i] = -99;
+        state.stats.lastRest[i] = -99;
       }
+    }
 
-      // --- 6人以上 / 2面運用時の動的アルゴリズム ---
-      const playersPerRound = numCourts * 4;
-      const numResting = numPlayers - playersPerRound;
+    function generateMatches(numMatches) {
+      for (let m = 0; m < numMatches; m++) {
+        const matchIndex = state.matches.length;
+        let bestMatch;
 
-      for (let r = 0; r < count; r++) {
-        const currentRoundNum = scheduleData.length + 1;
-        let restedThisRound = [];
-        let playingThisRound = [];
-
-        if (currentRoundNum === 1) {
-          playingThisRound = Array.from({ length: playersPerRound }, (_, i) => i + 1);
-          for (let p = playersPerRound + 1; p <= numPlayers; p++) {
-            restedThisRound.push(p);
-          }
+        // ★要件：最初の試合のAコートは必ず1・2 vs 3・4に固定
+        if (matchIndex === 0) {
+          bestMatch = generateFirstFixedMatch();
         } else {
-          if (numResting === 0) {
-            restedThisRound = [];
-          } else {
-            let allPlayers = Array.from({ length: numPlayers }, (_, i) => i + 1);
-            let allCombos = getCombinations(allPlayers, numResting);
-            let comboScores = [];
-
-            allCombos.forEach(combo => {
-              let score = 0;
-              let invalid = false;
-
-              // 過去3試合以内に休んだ人は原則除外（最低3試合連続出場）
-              combo.forEach(p => {
-                if (roundsSinceLastRest[p] < 3) invalid = true;
-              });
-
-              if (invalid) return;
-
-              combo.forEach(p => {
-                score += roundsSinceLastRest[p] * 120;
-                score -= restCounts[p] * 40;
-              });
-
-              let playingCandidates = allPlayers.filter(p => !combo.includes(p));
-              let pairDuplicationPenalty = 0;
-
-              for (let i = 0; i < playingCandidates.length; i++) {
-                for (let j = i + 1; j < playingCandidates.length; j++) {
-                  let p1 = playingCandidates[i];
-                  let p2 = playingCandidates[j];
-                  pairDuplicationPenalty += Math.pow(pairMatrix[p1][p2], 2) * 500;
-                }
-              }
-              score -= pairDuplicationPenalty;
-
-              for (let i = 0; i < combo.length; i++) {
-                for (let j = i + 1; j < combo.length; j++) {
-                  let p1 = combo[i];
-                  let p2 = combo[j];
-                  score -= restPairMatrix[p1][p2] * 250;
-                }
-              }
-
-              score += Math.random() * 10;
-              comboScores.push({ combo, score });
-            });
-
-            if (comboScores.length > 0) {
-              comboScores.sort((a, b) => b.score - a.score);
-              restedThisRound = comboScores[0].combo;
-            } else {
-              // 該当候補がない場合、最も出場間隔が空いている人から選出
-              let candidates = [...allPlayers].sort((a, b) => roundsSinceLastRest[b] - roundsSinceLastRest[a]);
-              restedThisRound = candidates.slice(0, numResting);
-            }
-          }
-
-          playingThisRound = Array.from({ length: numPlayers }, (_, i) => i + 1)
-                                  .filter(p => !restedThisRound.includes(p));
+          bestMatch = generateBestNextMatch(matchIndex);
         }
 
-        for (let p = 1; p <= numPlayers; p++) {
-          if (restedThisRound.includes(p)) {
-            restCounts[p]++;
-            roundsSinceLastRest[p] = 0;
-          } else {
-            playCounts[p]++;
-            roundsSinceLastRest[p]++;
-          }
-        }
-
-        for (let i = 0; i < restedThisRound.length; i++) {
-          for (let j = i + 1; j < restedThisRound.length; j++) {
-            let p1 = restedThisRound[i];
-            let p2 = restedThisRound[j];
-            restPairMatrix[p1][p2]++;
-            restPairMatrix[p2][p1]++;
-          }
-        }
-
-        let courts = [];
-        let remainingPlaying = [...playingThisRound];
-
-        for (let c = 0; c < numCourts; c++) {
-          let four = remainingPlaying.splice(0, 4);
-          let match = null;
-
-          if (currentRoundNum === 1 && c === 0) {
-            match = { p1: four[0], p2: four[1], p3: four[2], p4: four[3] };
-          } else {
-            match = getBestCourtPairing(four);
-          }
-
-          pairMatrix[match.p1][match.p2]++;
-          pairMatrix[match.p2][match.p1]++;
-          pairMatrix[match.p3][match.p4]++;
-          pairMatrix[match.p4][match.p3]++;
-
-          courts.push({
-            courtNum: String.fromCharCode(65 + c),
-            p1: match.p1, p2: match.p2, p3: match.p3, p4: match.p4,
-            scoreA: '-', scoreB: '-'
-          });
-        }
-
-        scheduleData.push({
-          round: currentRoundNum,
-          courts: courts,
-          rest: restedThisRound.sort((a, b) => a - b)
-        });
+        state.matches.push(bestMatch);
+        applyMatchToStats(bestMatch, matchIndex);
       }
-
-      renderSchedule();
     }
 
-    function renderSchedule() {
-      const container = document.getElementById('scheduleContainer');
+    // 第1試合を「1・2 vs 3・4」固定で生成する関数
+    function generateFirstFixedMatch() {
+      const N = state.playerCount;
+      const C = state.courtCount;
+      const allPlayers = Array.from({ length: N }, (_, i) => i + 1);
+
+      // Aコート固定: pair1=[1,2], pair2=[3,4]
+      const court1 = { pair1: [1, 2], pair2: [3, 4] };
+
+      if (C === 1) {
+        // 1面の場合：残り全員が休憩
+        const rests = allPlayers.filter(x => x > 4);
+        return {
+          rests: rests,
+          courts: [court1]
+        };
+      } else {
+        // 2面の場合：出場者(8人)から1,2,3,4を除いた残りのプレイヤーから4人選んでBコートへ
+        const remainingForCourt2 = allPlayers.filter(x => x > 4);
+        const court2Groups = combinations(remainingForCourt2, 4);
+        
+        // ランダムに1つBコートグループを選択
+        const selectedC2 = court2Groups[Math.floor(Math.random() * court2Groups.length)];
+        const c2Set = new Set(selectedC2);
+        
+        // Bコートのペアリングを1つランダム選択
+        const c2Pairings = getPairingsFor4(selectedC2);
+        const selectedC2Pairing = c2Pairings[Math.floor(Math.random() * c2Pairings.length)];
+        
+        const court2 = { pair1: selectedC2Pairing.pair1, pair2: selectedC2Pairing.pair2 };
+        const rests = remainingForCourt2.filter(x => !c2Set.has(x));
+
+        return {
+          rests: rests,
+          courts: [court1, court2]
+        };
+      }
+    }
+
+    // 次の1試合の最適な割り当てを探索・生成
+    function generateBestNextMatch(matchIndex) {
+      const N = state.playerCount;
+      const C = state.courtCount;
+      const playingCount = C * 4;
+      const restCount = N - playingCount;
+      const allPlayers = Array.from({ length: N }, (_, i) => i + 1);
+
+      const restCandidates = combinations(allPlayers, restCount);
+      let candidatePool = [];
+
+      for (let rests of restCandidates) {
+        const restsSet = new Set(rests);
+        const activePlayers = allPlayers.filter(x => !restsSet.has(x));
+
+        if (C === 1) {
+          const pairings = getPairingsFor4(activePlayers);
+          for (let p of pairings) {
+            const matchStructure = {
+              rests: rests,
+              courts: [{ pair1: p.pair1, pair2: p.pair2 }]
+            };
+            const score = evaluateMatchCandidate(matchStructure, matchIndex);
+            candidatePool.push({ match: matchStructure, score: score });
+          }
+        } else if (C === 2) {
+          const court1Groups = combinations(activePlayers, 4);
+          for (let c1 of court1Groups) {
+            const c1Set = new Set(c1);
+            const c2 = activePlayers.filter(x => !c1Set.has(x));
+
+            const pairings1 = getPairingsFor4(c1);
+            const pairings2 = getPairingsFor4(c2);
+
+            for (let p1 of pairings1) {
+              for (let p2 of pairings2) {
+                const matchStructure = {
+                  rests: rests,
+                  courts: [
+                    { pair1: p1.pair1, pair2: p1.pair2 },
+                    { pair1: p2.pair1, pair2: p2.pair2 }
+                  ]
+                };
+                const score = evaluateMatchCandidate(matchStructure, matchIndex);
+                candidatePool.push({ match: matchStructure, score: score });
+              }
+            }
+          }
+        }
+      }
+
+      candidatePool.sort((a, b) => a.score - b.score);
+
+      const bestScore = candidatePool[0].score;
+      const threshold = 15;
+      const topCandidates = candidatePool.filter(c => c.score <= bestScore + threshold);
+      const selected = topCandidates[Math.floor(Math.random() * topCandidates.length)];
+
+      return selected.match;
+    }
+
+    // 評価関数
+    function evaluateMatchCandidate(match, matchIndex) {
+      let penalty = 0;
+      const st = state.stats;
+      const N = state.playerCount;
+      const rests = match.rests;
+      const restsSet = new Set(rests);
+
+      // 1. 連続休憩ペナルティ
+      for (let r of rests) {
+        if (st.lastRest[r] === matchIndex - 1) {
+          penalty += 10000;
+        }
+      }
+
+      // 2. 休憩・出場回数の偏り評価
+      for (let i = 1; i <= N; i++) {
+        let hypotheticalRest = (st.restCounts[i] || 0) + (restsSet.has(i) ? 1 : 0);
+        penalty += Math.pow(hypotheticalRest, 2) * 50;
+        penalty -= hypotheticalRest * 10;
+      }
+
+      // 3. 休憩ペア重複評価
+      if (rests.length > 1) {
+        const restGroupKey = getGroupKey(rests);
+        const prevRestGroupCount = st.restGroupCounts[restGroupKey] || 0;
+        penalty += prevRestGroupCount * 500;
+
+        const rPairs = combinations(rests, 2);
+        for (let rp of rPairs) {
+          const rKey = getPairKey(rp[0], rp[1]);
+          const count = st.restPairCounts[rKey] || 0;
+          penalty += count * 200;
+        }
+      }
+
+      // 4. ペアリング＆コート・対戦相手の評価
+      for (let court of match.courts) {
+        const pairs = [court.pair1, court.pair2];
+        for (let pair of pairs) {
+          const pKey = getPairKey(pair[0], pair[1]);
+          const currentPairCount = st.pairCounts[pKey] || 0;
+          const lastMatch = st.lastPairMatch[pKey];
+
+          if (currentPairCount === 0) {
+            penalty -= 800; // 未使用ペアの強優先ボーナス
+          } else {
+            penalty += Math.pow(currentPairCount, 2) * 400;
+          }
+
+          if (lastMatch !== undefined && lastMatch >= 0) {
+            const diff = matchIndex - lastMatch;
+            if (diff < (N * (N - 1) / 2) / 2) {
+              penalty += (20 - diff) * 50;
+            }
+          }
+        }
+
+        const courtPlayers = [...court.pair1, ...court.pair2];
+        const g4Key = getGroupKey(courtPlayers);
+        penalty += (st.group4Counts[g4Key] || 0) * 300;
+
+        for (let p1 of court.pair1) {
+          for (let p2 of court.pair2) {
+            const oppKey = getPairKey(p1, p2);
+            penalty += (st.opponentCounts[oppKey] || 0) * 40;
+          }
+        }
+      }
+
+      penalty += Math.random() * 2;
+      return penalty;
+    }
+
+    function applyMatchToStats(match, matchIndex) {
+      const st = state.stats;
+      const restsSet = new Set(match.rests);
+
+      for (let i = 1; i <= state.playerCount; i++) {
+        if (restsSet.has(i)) {
+          st.restCounts[i] = (st.restCounts[i] || 0) + 1;
+          st.consecutiveRest[i] = (st.consecutiveRest[i] || 0) + 1;
+          st.lastRest[i] = matchIndex;
+        } else {
+          st.playCounts[i] = (st.playCounts[i] || 0) + 1;
+          st.consecutiveRest[i] = 0;
+          st.lastPlayed[i] = matchIndex;
+        }
+      }
+
+      if (match.rests.length > 0) {
+        const rgKey = getGroupKey(match.rests);
+        st.restGroupCounts[rgKey] = (st.restGroupCounts[rgKey] || 0) + 1;
+
+        if (match.rests.length > 1) {
+          for (let rp of combinations(match.rests, 2)) {
+            const rk = getPairKey(rp[0], rp[1]);
+            st.restPairCounts[rk] = (st.restPairCounts[rk] || 0) + 1;
+          }
+        }
+      }
+
+      for (let court of match.courts) {
+        const courtPlayers = [...court.pair1, ...court.pair2];
+        const g4Key = getGroupKey(courtPlayers);
+        st.group4Counts[g4Key] = (st.group4Counts[g4Key] || 0) + 1;
+
+        const pairs = [court.pair1, court.pair2];
+        for (let p of pairs) {
+          const pk = getPairKey(p[0], p[1]);
+          st.pairCounts[pk] = (st.pairCounts[pk] || 0) + 1;
+          st.lastPairMatch[pk] = matchIndex;
+        }
+
+        for (let p1 of court.pair1) {
+          for (let p2 of court.pair2) {
+            const ok = getPairKey(p1, p2);
+            st.opponentCounts[ok] = (st.opponentCounts[ok] || 0) + 1;
+          }
+        }
+      }
+    }
+
+    // ==========================================
+    // UI 描画 & インタラクション (タップ / ダブルタップ)
+    // ==========================================
+    function renderUI() {
+      const container = document.getElementById('matchesContainer');
       container.innerHTML = '';
 
-      scheduleData.forEach((rd, rIdx) => {
+      state.matches.forEach((match, idx) => {
         const card = document.createElement('div');
-        card.className = `match-card ${rIdx === activeMatchIndex ? 'active' : ''}`;
-        
-        let courtHtml = '';
-        rd.courts.forEach((c, cIdx) => {
-          courtHtml += `
-            <div class="court-box" onclick="handleTap(${rIdx}, ${cIdx})">
-              <span class="court-name">${c.courtNum}コート</span>
-              <span class="match-pair">${c.p1}・${c.p2} vs ${c.p3}・${c.p4}</span>
-              <span class="score-display">${c.scoreA} - ${c.scoreB}</span>
-            </div>
-          `;
+        card.className = `match-card ${state.selectedIndex === idx ? 'selected' : ''}`;
+
+        // タップ/ダブルタップ イベントハンドラ
+        card.addEventListener('click', (e) => handleMatchCardClick(idx));
+
+        let html = `<div class="match-header">
+                      <span>第 ${idx + 1} 試合</span>
+                      <span class="match-hint">ダブルタップでスコア入力</span>
+                    </div>`;
+
+        html += `<div class="court-container">`;
+        match.courts.forEach((c, cIdx) => {
+          const courtLabel = state.courtCount > 1 ? (cIdx === 0 ? 'Aコート' : 'Bコート') : 'コート';
+          
+          let scoreText = '';
+          if (c.score1 !== undefined && c.score2 !== undefined && c.score1 !== '' && c.score2 !== '') {
+            scoreText = `<span class="score-badge">${c.score1} - ${c.score2}</span>`;
+          }
+
+          html += `<div class="court-box">
+                    <div class="court-info">
+                      <span class="court-name">${courtLabel}:</span>
+                      <span class="player-tag">${c.pair1[0]}・${c.pair1[1]}</span>
+                      <span class="vs-text">vs</span>
+                      <span class="player-tag">${c.pair2[0]}・${c.pair2[1]}</span>
+                    </div>
+                    ${scoreText}
+                   </div>`;
         });
+        html += `</div>`;
 
-        let restText = rd.rest.length > 0 ? `休: ${rd.rest.join(', ')}` : '休みなし';
+        if (match.rests.length > 0) {
+          html += `<div class="rest-box">休: ${match.rests.join(', ')}</div>`;
+        }
 
-        card.innerHTML = `
-          <div class="match-header" onclick="setActiveMatch(${rIdx})">
-            <span>第 ${rd.round} 試合</span>
-            ${rIdx === activeMatchIndex ? '<span class="active-badge">進行中</span>' : ''}
-          </div>
-          <div class="court-grid">${courtHtml}</div>
-          <div class="rest-box">${restText}</div>
-        `;
+        card.innerHTML = html;
         container.appendChild(card);
       });
     }
 
-    function setActiveMatch(rIdx) {
-      triggerVibration(10);
-      activeMatchIndex = rIdx;
-      renderSchedule();
-    }
+    // タップ & ダブルタップ判定処理
+    function handleMatchCardClick(idx) {
+      const currentTime = new Date().getTime();
+      const tapLength = currentTime - lastTapTime;
 
-    let lastTapTime = 0;
-    let lastTapTarget = null;
+      // シングルタップ処理 (選択状態切替)
+      state.selectedIndex = (state.selectedIndex === idx) ? null : idx;
+      renderUI();
 
-    function handleTap(rIdx, cIdx) {
-      const now = new Date().getTime();
-      const targetId = `${rIdx}-${cIdx}`;
-
-      if (now - lastTapTime < 300 && lastTapTarget === targetId) {
-        openScoreModal(rIdx, cIdx);
-      } else {
-        setActiveMatch(rIdx);
-      }
-      lastTapTime = now;
-      lastTapTarget = targetId;
-    }
-
-    function openScoreModal(rIdx, cIdx) {
-      triggerVibration(20);
-      targetScoreInfo = { rIdx, cIdx };
-      const court = scheduleData[rIdx].courts[cIdx];
-
-      document.getElementById('modalTitle').innerText = `第${rIdx+1}試合 (${court.courtNum}コート)`;
-      document.getElementById('modalPair').innerText = `${court.p1}・${court.p2} vs ${court.p3}・${court.p4}`;
-
-      const scoreASelect = document.getElementById('scoreA');
-      const scoreBSelect = document.getElementById('scoreB');
-      scoreASelect.innerHTML = ''; scoreBSelect.innerHTML = '';
-
-      for (let i = 0; i <= 7; i++) {
-        scoreASelect.add(new Option(i, i));
-        scoreBSelect.add(new Option(i, i));
+      // ダブルタップ処理 (300ms以内の連続タップ)
+      if (lastTapMatchIdx === idx && tapLength < 300 && tapLength > 0) {
+        openScoreModal(idx);
       }
 
-      scoreASelect.value = court.scoreA !== '-' ? court.scoreA : 0;
-      scoreBSelect.value = court.scoreB !== '-' ? court.scoreB : 0;
+      lastTapTime = currentTime;
+      lastTapMatchIdx = idx;
+    }
+
+    // ==========================================
+    // モーダル (スコア入力)
+    // ==========================================
+    let activeModalMatchIdx = null;
+
+    function openScoreModal(idx) {
+      activeModalMatchIdx = idx;
+      const match = state.matches[idx];
+      document.getElementById('modalTitle').textContent = `第 ${idx + 1} 試合 スコア入力`;
+
+      const inputsContainer = document.getElementById('modalScoreInputs');
+      inputsContainer.innerHTML = '';
+
+      match.courts.forEach((c, cIdx) => {
+        const courtLabel = state.courtCount > 1 ? (cIdx === 0 ? 'Aコート' : 'Bコート') : 'コート';
+        const row = document.createElement('div');
+        row.className = 'score-row';
+        row.innerHTML = `
+          <span style="font-weight:bold; font-size:0.9rem;">${courtLabel}</span>
+          <div class="score-inputs">
+            <span>${c.pair1[0]}・${c.pair1[1]}</span>
+            <input type="number" id="score_1_${cIdx}" value="${c.score1 !== undefined ? c.score1 : ''}" min="0" max="99">
+            <span>-</span>
+            <input type="number" id="score_2_${cIdx}" value="${c.score2 !== undefined ? c.score2 : ''}" min="0" max="99">
+            <span>${c.pair2[0]}・${c.pair2[1]}</span>
+          </div>
+        `;
+        inputsContainer.appendChild(row);
+      });
 
       document.getElementById('scoreModal').style.display = 'flex';
     }
 
-    function closeModal() {
+    function closeScoreModal() {
       document.getElementById('scoreModal').style.display = 'none';
+      activeModalMatchIdx = null;
     }
 
-    function saveScore() {
-      triggerVibration(15);
-      if (targetScoreInfo) {
-        const { rIdx, cIdx } = targetScoreInfo;
-        scheduleData[rIdx].courts[cIdx].scoreA = document.getElementById('scoreA').value;
-        scheduleData[rIdx].courts[cIdx].scoreB = document.getElementById('scoreB').value;
-        renderSchedule();
-      }
-      closeModal();
+    function saveScores() {
+      if (activeModalMatchIdx === null) return;
+
+      const match = state.matches[activeModalMatchIdx];
+      match.courts.forEach((c, cIdx) => {
+        const s1 = document.getElementById(`score_1_${cIdx}`).value;
+        const s2 = document.getElementById(`score_2_${cIdx}`).value;
+        c.score1 = s1;
+        c.score2 = s2;
+      });
+
+      closeScoreModal();
+      renderUI();
     }
 
-    function copyScheduleText() {
-      triggerVibration(15);
-      let text = "🎾【テニス乱数表】\n\n";
+    // ==========================================
+    // LINE出力・コピー
+    // ==========================================
+    function copyToClipboard() {
+      let text = `🎾【テニス乱数表】\n\n`;
 
-      scheduleData.forEach(rd => {
-        text += `■ 第${rd.round}試合\n`;
-        rd.courts.forEach(c => {
-          let score = (c.scoreA !== '-') ? ` (${c.scoreA}-${c.scoreB})` : '';
-          text += ` ${c.courtNum}: ${c.p1}・${c.p2} vs ${c.p3}・${c.p4}${score}\n`;
+      state.matches.forEach((match, idx) => {
+        text += `■ 第${idx + 1}試合\n`;
+        match.courts.forEach((c, cIdx) => {
+          const courtLabel = state.courtCount > 1 ? (cIdx === 0 ? ' A' : ' B') : '';
+          let scoreStr = '';
+          if (c.score1 !== undefined && c.score2 !== undefined && c.score1 !== '' && c.score2 !== '') {
+            scoreStr = ` [${c.score1}-${c.score2}]`;
+          }
+          text += `${courtLabel}: ${c.pair1[0]}・${c.pair1[1]} vs ${c.pair2[0]}・${c.pair2[1]}${scoreStr}\n`;
         });
-        if (rd.rest.length > 0) text += ` 休: ${rd.rest.join(', ')}\n`;
-        text += "\n";
+        if (match.rests.length > 0) {
+          text += ` 休: ${match.rests.join(', ')}\n`;
+        }
+        text += `\n`;
       });
 
-      navigator.clipboard.writeText(text).then(() => {
-        alert("LINE用の共有テキストをコピーしました！");
-      }).catch(() => {
-        alert("コピーに失敗しました");
+      navigator.clipboard.writeText(text.trim()).then(() => {
+        showToast();
+      }).catch(err => {
+        console.error('Copy failed', err);
       });
+    }
+
+    function showToast() {
+      const toast = document.getElementById('toast');
+      toast.style.display = 'block';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 2000);
+    }
+
+    // ==========================================
+    // 公平性ダッシュボード・検証
+    // ==========================================
+    function verifyAndLogFairness() {
+      const st = state.stats;
+      const N = state.playerCount;
+      const totalMatches = state.matches.length;
+
+      const restVals = Object.values(st.restCounts);
+      const minRest = Math.min(...restVals);
+      const maxRest = Math.max(...restVals);
+
+      const playVals = Object.values(st.playCounts);
+      const minPlay = Math.min(...playVals);
+      const maxPlay = Math.max(...playVals);
+
+      const totalPossiblePairs = (N * (N - 1)) / 2;
+      let usedPairsCount = 0;
+      let maxPairCount = 0;
+      for (let i = 1; i <= N; i++) {
+        for (let j = i + 1; j <= N; j++) {
+          const k = getPairKey(i, j);
+          const cnt = st.pairCounts[k] || 0;
+          if (cnt > 0) usedPairsCount++;
+          if (cnt > maxPairCount) maxPairCount = cnt;
+        }
+      }
+      const unusedPairs = totalPossiblePairs - usedPairsCount;
+
+      let consecutiveRestViolations = 0;
+      for (let i = 0; i < totalMatches - 1; i++) {
+        const r1 = new Set(state.matches[i].rests);
+        const r2 = state.matches[i + 1].rests;
+        for (let p of r2) {
+          if (r1.has(p)) consecutiveRestViolations++;
+        }
+      }
+
+      const statsHtml = `
+        <div>休憩差: <strong>${maxRest - minRest}</strong> (${minRest}〜${maxRest}回)</div>
+        <div>出場差: <strong>${maxPlay - minPlay}</strong> (${minPlay}〜${maxPlay}回)</div>
+        <div>連続休憩: <strong>${consecutiveRestViolations === 0 ? 'なし (完全達成)' : consecutiveRestViolations + '回'}</strong></div>
+        <div>全${totalPossiblePairs}組中 未使用ペア: <strong>${unusedPairs}</strong></div>
+        <div>ペア最大重複: <strong>${maxPairCount}回</strong></div>
+        <div>生成試合数: <strong>${totalMatches}試合</strong></div>
+      `;
+      document.getElementById('statsContent').innerHTML = statsHtml;
+    }
+
+    function consoleLogDetails() {
+      console.group('🎾 公平性詳細検証ログ');
+      console.log('■ 各プレイヤーの出場 / 休憩回数');
+      console.table(state.stats.playCounts);
+      console.log('休憩回数:', state.stats.restCounts);
+
+      console.log('■ ペア結成マトリックス / 回数');
+      console.table(state.stats.pairCounts);
+
+      console.log('■ 対戦相手結成回数');
+      console.table(state.stats.opponentCounts);
+
+      console.log('■ 全生成試合データ', state.matches);
+      console.groupEnd();
     }
   </script>
 </body>
