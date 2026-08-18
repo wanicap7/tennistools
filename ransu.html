@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>テニスダブルス公平乱数表ジェネレーター</title>
+  <title>テニスダブルス乱数表ジェネレーター</title>
   <style>
     :root {
       --primary-color: #2e7d32;
@@ -123,7 +123,6 @@
       margin-top: 8px;
     }
 
-    /* 試合カード */
     .match-card {
       background: var(--card-bg);
       border-radius: 12px;
@@ -185,18 +184,20 @@
     .court-info {
       display: flex;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 4px;
     }
 
     .court-name {
       font-weight: bold;
       color: #33691e;
-      margin-right: 8px;
+      margin-right: 4px;
     }
 
     .vs-text {
       color: #d32f2f;
       font-weight: bold;
-      margin: 0 6px;
+      margin: 0 4px;
     }
 
     .player-tag {
@@ -224,35 +225,6 @@
       font-size: 0.88rem;
       color: var(--accent-color);
       font-weight: bold;
-    }
-
-    .error-msg {
-      color: #d32f2f;
-      font-size: 0.85rem;
-      margin-top: 4px;
-      display: none;
-    }
-
-    .stats-card {
-      background: #fafafa;
-      border: 1px dashed #ccc;
-      border-radius: 8px;
-      padding: 12px;
-      font-size: 0.82rem;
-      color: #444;
-      margin-top: 16px;
-    }
-
-    .stats-title {
-      font-weight: bold;
-      margin-bottom: 6px;
-      color: #333;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px;
     }
 
     .modal-overlay {
@@ -330,15 +302,6 @@
       display: none;
       z-index: 3000;
     }
-
-    .collapsible-trigger {
-      cursor: pointer;
-      color: var(--primary-color);
-      text-decoration: underline;
-      font-size: 0.85rem;
-      margin-top: 8px;
-      display: inline-block;
-    }
   </style>
 </head>
 <body>
@@ -349,37 +312,38 @@
     <div class="setting-group">
       <div>
         <label for="playerCount">参加人数</label>
-        <select id="playerCount"></select>
+        <select id="playerCount" onchange="autoAdjustCourt()">
+          <option value="5">5人</option>
+          <option value="6" selected>6人</option>
+          <option value="7">7人</option>
+          <option value="8">8人</option>
+          <option value="9">9人</option>
+          <option value="10">10人</option>
+          <option value="11">11人</option>
+          <option value="12">12人</option>
+        </select>
       </div>
       <div>
         <label for="courtCount">コート数</label>
         <select id="courtCount">
-          <option value="1">1面 (4人出場)</option>
-          <option value="2">2面 (8人出場)</option>
+          <option value="1">1面</option>
+          <option value="2">2面</option>
         </select>
       </div>
     </div>
-    <div id="errorMsg" class="error-msg"></div>
 
     <div class="btn-group">
-      <button class="btn-primary" onclick="generateNewSchedule()">新規乱数表を作成</button>
-      <button id="btnAddMatches" class="btn-secondary" onclick="addMoreMatches(8)" disabled>+8試合追加</button>
+      <button class="btn-primary" onclick="generateNewSchedule()">乱数表を作成</button>
       <button id="btnCopy" class="btn-copy" onclick="copyToClipboard()" disabled>LINE用にテキストコピー</button>
     </div>
   </div>
 
   <div id="matchesContainer"></div>
 
-  <div id="statsCard" class="stats-card" style="display: none;">
-    <div class="stats-title">📊 公平性リアルタイム検証</div>
-    <div id="statsContent" class="stats-grid"></div>
-    <span class="collapsible-trigger" onclick="consoleLogDetails()">コンソールに詳細ログを出力</span>
-  </div>
-
   <!-- スコア入力Modal -->
   <div id="scoreModal" class="modal-overlay">
     <div class="modal-content">
-      <div id="modalTitle" class="modal-title">スコア入力 (第1試合)</div>
+      <div id="modalTitle" class="modal-title">スコア入力</div>
       <div id="modalScoreInputs" class="score-input-group"></div>
       <div class="modal-actions">
         <button class="btn-secondary" onclick="saveScores()">保存</button>
@@ -391,371 +355,158 @@
   <div id="toast" class="toast">クリップボードにコピーしました！</div>
 
   <script>
-    let state = {
-      playerCount: 5,
-      courtCount: 1,
-      selectedIndex: null,
-      matches: [],
-      stats: {
-        playCounts: {},
-        restCounts: {},
-        consecutiveRest: {},
-        pairCounts: {},
-        opponentCounts: {},
-        group4Counts: {},
-        restGroupCounts: {},
-        restPairCounts: {},
-        lastPlayed: {},
-        lastRest: {},
-        lastPairMatch: {},
-        lastGroup4Match: {}
-      }
-    };
+	// 5人1面：黄金固定テーブル
+const GOLDEN_TABLE_5P = [
+      { pair1: [1, 2], pair2: [3, 4], rest: [5] },
+      { pair1: [1, 3], pair2: [2, 5], rest: [4] },
+      { pair1: [2, 3], pair2: [4, 5], rest: [1] },
+      { pair1: [1, 4], pair2: [3, 5], rest: [2] },
+      { pair1: [1, 5], pair2: [2, 4], rest: [3] },
+      { pair1: [1, 3], pair2: [2, 4], rest: [5] },
+      { pair1: [1, 2], pair2: [3, 5], rest: [4] },
+      { pair1: [2, 4], pair2: [3, 5], rest: [1] },
+      { pair1: [1, 3], pair2: [4, 5], rest: [2] },
+      { pair1: [1, 4], pair2: [2, 5], rest: [3] },
+      { pair1: [1, 4], pair2: [2, 3], rest: [5] },
+      { pair1: [1, 5], pair2: [2, 3], rest: [4] },
+      { pair1: [2, 5], pair2: [3, 4], rest: [1] },
+      { pair1: [1, 5], pair2: [3, 4], rest: [2] },
+      { pair1: [1, 2], pair2: [4, 5], rest: [3] }
+    ];
 
+    // 6人1面：ご提示いただいた新しい15試合の対戦表に更新（休みは自動算出）
+    const GOLDEN_TABLE_6P = [
+      { pair1: [1, 2], pair2: [3, 4], rest: [5, 6] },
+      { pair1: [2, 4], pair2: [5, 6], rest: [1, 3] },
+      { pair1: [1, 6], pair2: [3, 4], rest: [2, 5] },
+      { pair1: [1, 5], pair2: [2, 6], rest: [3, 4] },
+      { pair1: [2, 3], pair2: [4, 5], rest: [1, 6] },
+      { pair1: [1, 2], pair2: [3, 6], rest: [4, 5] },
+      { pair1: [1, 4], pair2: [5, 6], rest: [2, 3] },
+      { pair1: [2, 4], pair2: [3, 6], rest: [1, 5] },
+      { pair1: [1, 3], pair2: [2, 5], rest: [4, 6] },
+      { pair1: [3, 5], pair2: [4, 6], rest: [1, 2] },
+      { pair1: [1, 6], pair2: [2, 5], rest: [3, 4] },
+      { pair1: [1, 4], pair2: [2, 3], rest: [5, 6] },
+      { pair1: [3, 4], pair2: [5, 6], rest: [1, 2] },
+      { pair1: [1, 5], pair2: [2, 6], rest: [3, 4] },
+      { pair1: [1, 3], pair2: [4, 5], rest: [2, 6] }
+    ];
+
+    let baseMatches = [];
+    let selectedIndex = null;
     let lastTapTime = 0;
     let lastTapMatchIdx = null;
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const pSelect = document.getElementById('playerCount');
-      for (let i = 4; i <= 20; i++) {
-        const opt = document.createElement('option');
-        opt.value = i;
-        opt.textContent = `${i}人`;
-        pSelect.appendChild(opt);
-      }
-      pSelect.value = 5;
+    const MAX_BASE_MATCHES = 15;
 
-      pSelect.addEventListener('change', validateSettings);
-      document.getElementById('courtCount').addEventListener('change', validateSettings);
-      validateSettings();
-    });
-
-    function validateSettings() {
-      const p = parseInt(document.getElementById('playerCount').value);
-      const c = parseInt(document.getElementById('courtCount').value);
-      const err = document.getElementById('errorMsg');
-
-      if (p < c * 4) {
-        err.textContent = `※ ${c}面でプレイするには最低${c * 4}人必要です。`;
-        err.style.display = 'block';
-        return false;
+    function autoAdjustCourt() {
+      const pCount = parseInt(document.getElementById('playerCount').value, 10);
+      const courtSelect = document.getElementById('courtCount');
+      if (pCount >= 8) {
+        courtSelect.value = '2';
       } else {
-        err.style.display = 'none';
-        return true;
+        courtSelect.value = '1';
       }
-    }
-
-    function getPairKey(a, b) {
-      return a < b ? `${a}-${b}` : `${b}-${a}`;
-    }
-
-    function getGroupKey(arr) {
-      return [...arr].sort((a, b) => a - b).join('-');
-    }
-
-    function combinations(arr, k) {
-      if (k === 0) return [[]];
-      if (arr.length === 0) return [];
-      const head = arr[0];
-      const tail = arr.slice(1);
-      const withHead = combinations(tail, k - 1).map(c => [head, ...c]);
-      const withoutHead = combinations(tail, k);
-      return [...withHead, ...withoutHead];
-    }
-
-    function getPairingsFor4(players4) {
-      const [a, b, c, d] = players4;
-      return [
-        { pair1: [a, b], pair2: [c, d] },
-        { pair1: [a, c], pair2: [b, d] },
-        { pair1: [a, d], pair2: [b, c] }
-      ];
     }
 
     function generateNewSchedule() {
-      if (!validateSettings()) return;
+      const pCount = parseInt(document.getElementById('playerCount').value, 10);
+      const cCount = parseInt(document.getElementById('courtCount').value, 10);
 
-      const p = parseInt(document.getElementById('playerCount').value);
-      const c = parseInt(document.getElementById('courtCount').value);
-
-      state.playerCount = p;
-      state.courtCount = c;
-      state.matches = [];
-      state.selectedIndex = null;
-      resetStats();
-
-      generateMatches(8);
-
-      document.getElementById('btnAddMatches').disabled = false;
-      document.getElementById('btnCopy').disabled = false;
-      document.getElementById('statsCard').style.display = 'block';
-
-      renderUI();
-      verifyAndLogFairness();
-    }
-
-    function addMoreMatches(count = 8) {
-      generateMatches(count);
-      renderUI();
-      verifyAndLogFairness();
-    }
-
-    function resetStats() {
-      const p = state.playerCount;
-      state.stats = {
-        playCounts: {},
-        restCounts: {},
-        consecutiveRest: {},
-        pairCounts: {},
-        opponentCounts: {},
-        group4Counts: {},
-        restGroupCounts: {},
-        restPairCounts: {},
-        lastPlayed: {},
-        lastRest: {},
-        lastPairMatch: {},
-        lastGroup4Match: {}
-      };
-
-      for (let i = 1; i <= p; i++) {
-        state.stats.playCounts[i] = 0;
-        state.stats.restCounts[i] = 0;
-        state.stats.consecutiveRest[i] = 0;
-        state.stats.lastPlayed[i] = -99;
-        state.stats.lastRest[i] = -99;
-      }
-    }
-
-    function generateMatches(numMatches) {
-      for (let m = 0; m < numMatches; m++) {
-        const matchIndex = state.matches.length;
-        let bestMatch;
-
-        if (matchIndex === 0) {
-          bestMatch = generateFirstFixedMatch();
-        } else {
-          bestMatch = generateBestNextMatch(matchIndex);
-        }
-
-        state.matches.push(bestMatch);
-        applyMatchToStats(bestMatch, matchIndex);
-      }
-    }
-
-    function generateFirstFixedMatch() {
-      const N = state.playerCount;
-      const C = state.courtCount;
-      const allPlayers = Array.from({ length: N }, (_, i) => i + 1);
-
-      const court1 = { pair1: [1, 2], pair2: [3, 4] };
-
-      if (C === 1) {
-        const rests = allPlayers.filter(x => x > 4);
-        return { rests: rests, courts: [court1] };
+      if (cCount === 1 && pCount === 5) {
+        loadFixedTable(GOLDEN_TABLE_5P);
+      } else if (cCount === 1 && pCount === 6) {
+        loadFixedTable(GOLDEN_TABLE_6P);
       } else {
-        const remainingForCourt2 = allPlayers.filter(x => x > 4);
-        const court2Groups = combinations(remainingForCourt2, 4);
-        const selectedC2 = court2Groups[Math.floor(Math.random() * court2Groups.length)];
-        const c2Set = new Set(selectedC2);
-        
-        const c2Pairings = getPairingsFor4(selectedC2);
-        const selectedC2Pairing = c2Pairings[Math.floor(Math.random() * c2Pairings.length)];
-        
-        const court2 = { pair1: selectedC2Pairing.pair1, pair2: selectedC2Pairing.pair2 };
-        const rests = remainingForCourt2.filter(x => !c2Set.has(x));
-
-        return { rests: rests, courts: [court1, court2] };
+        generateCalculatedSchedule(pCount, cCount);
       }
+
+      document.getElementById('btnCopy').disabled = false;
+      renderUI();
     }
 
-    function generateBestNextMatch(matchIndex) {
-      const N = state.playerCount;
-      const C = state.courtCount;
-      const playingCount = C * 4;
-      const restCount = N - playingCount;
-      const allPlayers = Array.from({ length: N }, (_, i) => i + 1);
+    function loadFixedTable(tableData) {
+      baseMatches = tableData.map((m) => ({
+        courts: [{ pair1: [...m.pair1], pair2: [...m.pair2], score1: '', score2: '' }],
+        rests: [...m.rest]
+      }));
+    }
 
-      const restCandidates = combinations(allPlayers, restCount);
-      let candidatePool = [];
+    function generateCalculatedSchedule(numPlayers, numCourts) {
+      const activePerMatch = numCourts * 4;
 
-      for (let rests of restCandidates) {
-        const restsSet = new Set(rests);
-        const activePlayers = allPlayers.filter(x => !restsSet.has(x));
+      if (numPlayers < activePerMatch) {
+        alert(`コート${numCourts}面（${activePerMatch}人必要）に対して人数（${numPlayers}人）が不足しています。`);
+        return;
+      }
 
-        if (C === 1) {
-          const pairings = getPairingsFor4(activePlayers);
-          for (let p of pairings) {
-            const matchStructure = {
-              rests: rests,
-              courts: [{ pair1: p.pair1, pair2: p.pair2 }]
-            };
-            const score = evaluateMatchCandidate(matchStructure, matchIndex);
-            candidatePool.push({ match: matchStructure, score: score });
-          }
-        } else if (C === 2) {
-          const court1Groups = combinations(activePlayers, 4);
-          for (let c1 of court1Groups) {
-            const c1Set = new Set(c1);
-            const c2 = activePlayers.filter(x => !c1Set.has(x));
+      let playCounts = Array(numPlayers + 1).fill(0);
+      let pairCounts = {};
+      let prevPlaying = new Set();
+      baseMatches = [];
 
-            const pairings1 = getPairingsFor4(c1);
-            const pairings2 = getPairingsFor4(c2);
+      function getPairKey(a, b) {
+        return a < b ? `${a}-${b}` : `${b}-${a}`;
+      }
 
-            for (let p1 of pairings1) {
-              for (let p2 of pairings2) {
-                const matchStructure = {
-                  rests: rests,
-                  courts: [
-                    { pair1: p1.pair1, pair2: p1.pair2 },
-                    { pair1: p2.pair1, pair2: p2.pair2 }
-                  ]
-                };
-                const score = evaluateMatchCandidate(matchStructure, matchIndex);
-                candidatePool.push({ match: matchStructure, score: score });
-              }
+      for (let m = 0; m < MAX_BASE_MATCHES; m++) {
+        let players = Array.from({ length: numPlayers }, (_, i) => i + 1);
+
+        players.sort((a, b) => {
+          if (playCounts[a] !== playCounts[b]) return playCounts[a] - playCounts[b];
+          let aPrev = prevPlaying.has(a) ? 1 : 0;
+          let bPrev = prevPlaying.has(b) ? 1 : 0;
+          if (aPrev !== bPrev) return aPrev - bPrev;
+          return Math.random() - 0.5;
+        });
+
+        let selected = players.slice(0, activePerMatch);
+        let currentRests = players.slice(activePerMatch).sort((a, b) => a - b);
+
+        let matchCourts = [];
+
+        for (let c = 0; c < numCourts; c++) {
+          let bestCombination = null;
+          let minScore = Infinity;
+
+          let p = selected.slice(c * 4, c * 4 + 4);
+          let combos = [
+            { p1: [p[0], p[1]], p2: [p[2], p[3]] },
+            { p1: [p[0], p[2]], p2: [p[1], p[3]] },
+            { p1: [p[0], p[3]], p2: [p[1], p[2]] }
+          ];
+
+          combos.forEach((cb) => {
+            let k1 = getPairKey(cb.p1[0], cb.p1[1]);
+            let k2 = getPairKey(cb.p2[0], cb.p2[1]);
+            let score = (pairCounts[k1] || 0) + (pairCounts[k2] || 0);
+            if (score < minScore) {
+              minScore = score;
+              bestCombination = cb;
             }
-          }
-        }
-      }
+          });
 
-      candidatePool.sort((a, b) => a.score - b.score);
+          let k1 = getPairKey(bestCombination.p1[0], bestCombination.p1[1]);
+          let k2 = getPairKey(bestCombination.p2[0], bestCombination.p2[1]);
+          pairCounts[k1] = (pairCounts[k1] || 0) + 1;
+          pairCounts[k2] = (pairCounts[k2] || 0) + 1;
 
-      const bestScore = candidatePool[0].score;
-      const threshold = 15;
-      const topCandidates = candidatePool.filter(c => c.score <= bestScore + threshold);
-      const selected = topCandidates[Math.floor(Math.random() * topCandidates.length)];
-
-      return selected.match;
-    }
-
-    function evaluateMatchCandidate(match, matchIndex) {
-      let penalty = 0;
-      const st = state.stats;
-      const N = state.playerCount;
-      const rests = match.rests;
-      const restsSet = new Set(rests);
-
-      // --- 厳格な休憩平準化チェック ---
-      // 現時点での最小休憩数を取得
-      const currentRestVals = Object.values(st.restCounts);
-      const minRest = Math.min(...currentRestVals);
-
-      for (let r of rests) {
-        // 1. 連続休憩の絶対禁止
-        if (st.lastRest[r] === matchIndex - 1) {
-          penalty += 100000;
+          matchCourts.push({
+            pair1: bestCombination.p1,
+            pair2: bestCombination.p2,
+            score1: '',
+            score2: ''
+          });
         }
 
-        // 2. まだ最小休憩回数に達していない人がいるのに、先に2回目以上の休憩に入るのを強力に抑止
-        if ((st.restCounts[r] || 0) > minRest) {
-          penalty += 50000;
-        }
-      }
+        selected.forEach((p) => playCounts[p]++);
+        prevPlaying = new Set(selected);
 
-      // 3. 全員の休憩回数の差を二乗ペナルティで均等化
-      for (let i = 1; i <= N; i++) {
-        let hypotheticalRest = (st.restCounts[i] || 0) + (restsSet.has(i) ? 1 : 0);
-        penalty += Math.pow(hypotheticalRest, 3) * 500;
-      }
-
-      // 4. 休憩ペア重複評価
-      if (rests.length > 1) {
-        const restGroupKey = getGroupKey(rests);
-        const prevRestGroupCount = st.restGroupCounts[restGroupKey] || 0;
-        penalty += prevRestGroupCount * 500;
-
-        const rPairs = combinations(rests, 2);
-        for (let rp of rPairs) {
-          const rKey = getPairKey(rp[0], rp[1]);
-          const count = st.restPairCounts[rKey] || 0;
-          penalty += count * 200;
-        }
-      }
-
-      // 5. ペアリング＆コート・対戦相手の評価
-      for (let court of match.courts) {
-        const pairs = [court.pair1, court.pair2];
-        for (let pair of pairs) {
-          const pKey = getPairKey(pair[0], pair[1]);
-          const currentPairCount = st.pairCounts[pKey] || 0;
-          const lastMatch = st.lastPairMatch[pKey];
-
-          if (currentPairCount === 0) {
-            penalty -= 800;
-          } else {
-            penalty += Math.pow(currentPairCount, 2) * 400;
-          }
-
-          if (lastMatch !== undefined && lastMatch >= 0) {
-            const diff = matchIndex - lastMatch;
-            if (diff < (N * (N - 1) / 2) / 2) {
-              penalty += (20 - diff) * 50;
-            }
-          }
-        }
-
-        const courtPlayers = [...court.pair1, ...court.pair2];
-        const g4Key = getGroupKey(courtPlayers);
-        penalty += (st.group4Counts[g4Key] || 0) * 300;
-
-        for (let p1 of court.pair1) {
-          for (let p2 of court.pair2) {
-            const oppKey = getPairKey(p1, p2);
-            penalty += (st.opponentCounts[oppKey] || 0) * 40;
-          }
-        }
-      }
-
-      penalty += Math.random() * 2;
-      return penalty;
-    }
-
-    function applyMatchToStats(match, matchIndex) {
-      const st = state.stats;
-      const restsSet = new Set(match.rests);
-
-      for (let i = 1; i <= state.playerCount; i++) {
-        if (restsSet.has(i)) {
-          st.restCounts[i] = (st.restCounts[i] || 0) + 1;
-          st.consecutiveRest[i] = (st.consecutiveRest[i] || 0) + 1;
-          st.lastRest[i] = matchIndex;
-        } else {
-          st.playCounts[i] = (st.playCounts[i] || 0) + 1;
-          st.consecutiveRest[i] = 0;
-          st.lastPlayed[i] = matchIndex;
-        }
-      }
-
-      if (match.rests.length > 0) {
-        const rgKey = getGroupKey(match.rests);
-        st.restGroupCounts[rgKey] = (st.restGroupCounts[rgKey] || 0) + 1;
-
-        if (match.rests.length > 1) {
-          for (let rp of combinations(match.rests, 2)) {
-            const rk = getPairKey(rp[0], rp[1]);
-            st.restPairCounts[rk] = (st.restPairCounts[rk] || 0) + 1;
-          }
-        }
-      }
-
-      for (let court of match.courts) {
-        const courtPlayers = [...court.pair1, ...court.pair2];
-        const g4Key = getGroupKey(courtPlayers);
-        st.group4Counts[g4Key] = (st.group4Counts[g4Key] || 0) + 1;
-
-        const pairs = [court.pair1, court.pair2];
-        for (let p of pairs) {
-          const pk = getPairKey(p[0], p[1]);
-          st.pairCounts[pk] = (st.pairCounts[pk] || 0) + 1;
-          st.lastPairMatch[pk] = matchIndex;
-        }
-
-        for (let p1 of court.pair1) {
-          for (let p2 of court.pair2) {
-            const ok = getPairKey(p1, p2);
-            st.opponentCounts[ok] = (st.opponentCounts[ok] || 0) + 1;
-          }
-        }
+        baseMatches.push({
+          courts: matchCourts,
+          rests: currentRests
+        });
       }
     }
 
@@ -763,29 +514,29 @@
       const container = document.getElementById('matchesContainer');
       container.innerHTML = '';
 
-      state.matches.forEach((match, idx) => {
+      baseMatches.forEach((match, idx) => {
         const card = document.createElement('div');
-        card.className = `match-card ${state.selectedIndex === idx ? 'selected' : ''}`;
+        card.className = `match-card ${selectedIndex === idx ? 'selected' : ''}`;
 
-        card.addEventListener('click', (e) => handleMatchCardClick(idx));
+        card.addEventListener('click', () => handleMatchCardClick(idx));
 
         let html = `<div class="match-header">
                       <span>第 ${idx + 1} 試合</span>
-                      <span class="match-hint">ダブルタップでスコア入力</span>
+                      <span class="match-hint">ダブルタップでスコア</span>
                     </div>`;
 
         html += `<div class="court-container">`;
         match.courts.forEach((c, cIdx) => {
-          const courtLabel = state.courtCount > 1 ? (cIdx === 0 ? 'Aコート' : 'Bコート') : 'コート';
-          
           let scoreText = '';
           if (c.score1 !== undefined && c.score2 !== undefined && c.score1 !== '' && c.score2 !== '') {
             scoreText = `<span class="score-badge">${c.score1} - ${c.score2}</span>`;
           }
 
+          let courtLabel = match.courts.length > 1 ? `面${cIdx + 1}:` : 'コート:';
+
           html += `<div class="court-box">
                     <div class="court-info">
-                      <span class="court-name">${courtLabel}:</span>
+                      <span class="court-name">${courtLabel}</span>
                       <span class="player-tag">${c.pair1[0]}・${c.pair1[1]}</span>
                       <span class="vs-text">vs</span>
                       <span class="player-tag">${c.pair2[0]}・${c.pair2[1]}</span>
@@ -808,7 +559,7 @@
       const currentTime = new Date().getTime();
       const tapLength = currentTime - lastTapTime;
 
-      state.selectedIndex = (state.selectedIndex === idx) ? null : idx;
+      selectedIndex = (selectedIndex === idx) ? null : idx;
       renderUI();
 
       if (lastTapMatchIdx === idx && tapLength < 300 && tapLength > 0) {
@@ -823,24 +574,24 @@
 
     function openScoreModal(idx) {
       activeModalMatchIdx = idx;
-      const match = state.matches[idx];
+      const match = baseMatches[idx];
       document.getElementById('modalTitle').textContent = `第 ${idx + 1} 試合 スコア入力`;
 
       const inputsContainer = document.getElementById('modalScoreInputs');
       inputsContainer.innerHTML = '';
 
       match.courts.forEach((c, cIdx) => {
-        const courtLabel = state.courtCount > 1 ? (cIdx === 0 ? 'Aコート' : 'Bコート') : 'コート';
         const row = document.createElement('div');
         row.className = 'score-row';
+        let labelText = match.courts.length > 1 ? `コート ${cIdx + 1}` : 'コート';
         row.innerHTML = `
-          <span style="font-weight:bold; font-size:0.9rem;">${courtLabel}</span>
+          <span style="font-weight:bold; font-size:0.85rem;">${labelText}</span>
           <div class="score-inputs">
-            <span>${c.pair1[0]}・${c.pair1[1]}</span>
+            <span style="font-size:0.85rem;">${c.pair1[0]}・${c.pair1[1]}</span>
             <input type="number" id="score_1_${cIdx}" value="${c.score1 !== undefined ? c.score1 : ''}" min="0" max="99">
             <span>-</span>
             <input type="number" id="score_2_${cIdx}" value="${c.score2 !== undefined ? c.score2 : ''}" min="0" max="99">
-            <span>${c.pair2[0]}・${c.pair2[1]}</span>
+            <span style="font-size:0.85rem;">${c.pair2[0]}・${c.pair2[1]}</span>
           </div>
         `;
         inputsContainer.appendChild(row);
@@ -857,7 +608,7 @@
     function saveScores() {
       if (activeModalMatchIdx === null) return;
 
-      const match = state.matches[activeModalMatchIdx];
+      const match = baseMatches[activeModalMatchIdx];
       match.courts.forEach((c, cIdx) => {
         const s1 = document.getElementById(`score_1_${cIdx}`).value;
         const s2 = document.getElementById(`score_2_${cIdx}`).value;
@@ -872,15 +623,15 @@
     function copyToClipboard() {
       let text = `🎾【テニス乱数表】\n\n`;
 
-      state.matches.forEach((match, idx) => {
+      baseMatches.forEach((match, idx) => {
         text += `■ 第${idx + 1}試合\n`;
         match.courts.forEach((c, cIdx) => {
-          const courtLabel = state.courtCount > 1 ? (cIdx === 0 ? ' A' : ' B') : '';
+          let courtPrefix = match.courts.length > 1 ? `[面${cIdx + 1}] ` : '';
           let scoreStr = '';
           if (c.score1 !== undefined && c.score2 !== undefined && c.score1 !== '' && c.score2 !== '') {
             scoreStr = ` [${c.score1}-${c.score2}]`;
           }
-          text += `${courtLabel}: ${c.pair1[0]}・${c.pair1[1]} vs ${c.pair2[0]}・${c.pair2[1]}${scoreStr}\n`;
+          text += `${courtPrefix}${c.pair1[0]}・${c.pair1[1]} vs ${c.pair2[0]}・${c.pair2[1]}${scoreStr}\n`;
         });
         if (match.rests.length > 0) {
           text += ` 休: ${match.rests.join(', ')}\n`;
@@ -901,68 +652,6 @@
       setTimeout(() => {
         toast.style.display = 'none';
       }, 2000);
-    }
-
-    function verifyAndLogFairness() {
-      const st = state.stats;
-      const N = state.playerCount;
-      const totalMatches = state.matches.length;
-
-      const restVals = Object.values(st.restCounts);
-      const minRest = Math.min(...restVals);
-      const maxRest = Math.max(...restVals);
-
-      const playVals = Object.values(st.playCounts);
-      const minPlay = Math.min(...playVals);
-      const maxPlay = Math.max(...playVals);
-
-      const totalPossiblePairs = (N * (N - 1)) / 2;
-      let usedPairsCount = 0;
-      let maxPairCount = 0;
-      for (let i = 1; i <= N; i++) {
-        for (let j = i + 1; j <= N; j++) {
-          const k = getPairKey(i, j);
-          const cnt = st.pairCounts[k] || 0;
-          if (cnt > 0) usedPairsCount++;
-          if (cnt > maxPairCount) maxPairCount = cnt;
-        }
-      }
-      const unusedPairs = totalPossiblePairs - usedPairsCount;
-
-      let consecutiveRestViolations = 0;
-      for (let i = 0; i < totalMatches - 1; i++) {
-        const r1 = new Set(state.matches[i].rests);
-        const r2 = state.matches[i + 1].rests;
-        for (let p of r2) {
-          if (r1.has(p)) consecutiveRestViolations++;
-        }
-      }
-
-      const statsHtml = `
-        <div>休憩差: <strong>${maxRest - minRest}</strong> (${minRest}〜${maxRest}回)</div>
-        <div>出場差: <strong>${maxPlay - minPlay}</strong> (${minPlay}〜${maxPlay}回)</div>
-        <div>連続休憩: <strong>${consecutiveRestViolations === 0 ? 'なし (完全達成)' : consecutiveRestViolations + '回'}</strong></div>
-        <div>全${totalPossiblePairs}組中 未使用ペア: <strong>${unusedPairs}</strong></div>
-        <div>ペア最大重複: <strong>${maxPairCount}回</strong></div>
-        <div>生成試合数: <strong>${totalMatches}試合</strong></div>
-      `;
-      document.getElementById('statsContent').innerHTML = statsHtml;
-    }
-
-    function consoleLogDetails() {
-      console.group('🎾 公平性詳細検証ログ');
-      console.log('■ 各プレイヤーの出場 / 休憩回数');
-      console.table(state.stats.playCounts);
-      console.log('休憩回数:', state.stats.restCounts);
-
-      console.log('■ ペア結成マトリックス / 回数');
-      console.table(state.stats.pairCounts);
-
-      console.log('■ 対戦相手結成回数');
-      console.table(state.stats.opponentCounts);
-
-      console.log('■ 全生成試合データ', state.matches);
-      console.groupEnd();
     }
   </script>
 </body>
