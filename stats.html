@@ -1,228 +1,289 @@
-```html
 <!DOCTYPE html>
+
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>テニススタッツ計測ツール</title>
 
 <style>
-:root {
+:root{
   --primary:#2563eb;
+  --primary-dark:#1d4ed8;
   --bg:#f8fafc;
-  --card:#ffffff;
+  --card:#fff;
   --text:#1e293b;
+  --muted:#64748b;
   --border:#e2e8f0;
+  --danger:#f59e0b;
 }
 
-* { box-sizing:border-box; }
+*{box-sizing:border-box}
 
-body {
-  font-family:sans-serif;
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;
   background:var(--bg);
   color:var(--text);
   margin:0;
-  padding:12px;
+  padding:10px;
+  -webkit-tap-highlight-color:transparent;
 }
 
-.container {
-  max-width:750px;
+.container{
+  width:100%;
+  max-width:850px;
   margin:0 auto;
 }
 
-.card {
+.card{
   background:var(--card);
-  border-radius:8px;
-  padding:16px;
-  margin-bottom:12px;
+  border-radius:10px;
+  padding:14px;
+  margin-bottom:10px;
   border:1px solid var(--border);
-  box-shadow:0 1px 3px rgba(0,0,0,0.05);
+  box-shadow:0 1px 3px rgba(0,0,0,.05);
 }
 
-h2,h3 {
-  margin-top:0;
-  margin-bottom:12px;
+h2,h3{
+  margin:0 0 10px;
   text-align:center;
 }
 
-.scoreboard {
-  background:#0f172a;
-  color:#fff;
-  padding:12px;
-  border-radius:8px;
-  text-align:center;
-}
-
-.match-date {
-  font-size:.85rem;
-  color:#38bdf8;
-  margin-bottom:4px;
-}
-
-.score-sets {
-  font-size:1.1rem;
-  color:#94a3b8;
-  margin-bottom:4px;
-}
-
-.score-main {
-  font-size:2rem;
-  font-weight:bold;
-  letter-spacing:2px;
-  color:#38bdf8;
-}
-
-.serve-status {
+label{
   font-size:.9rem;
-  margin-top:4px;
-  color:#fde047;
 }
 
-.btn-grid {
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:8px;
-  margin-bottom:8px;
-}
-
-.btn-grid-4 {
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:6px;
-}
-
-.btn-grid-2 {
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:8px;
-}
-
-button {
-  padding:12px 8px;
-  font-size:.95rem;
-  font-weight:bold;
+input[type=text],
+input[type=date],
+select{
+  width:100%;
+  padding:10px;
+  margin:4px 0 8px;
+  border:1px solid var(--border);
   border-radius:6px;
+  font-size:16px;
+  background:#fff;
+}
+
+button{
+  padding:12px 8px;
+  font-size:.92rem;
+  font-weight:bold;
+  border-radius:7px;
   border:1px solid #cbd5e1;
   background:#f1f5f9;
   color:var(--text);
   cursor:pointer;
+  touch-action:manipulation;
+  min-height:46px;
 }
 
-button:active {
+button:active{
   transform:scale(.98);
 }
 
-button.selected {
+button.selected{
   background:var(--primary)!important;
-  color:white!important;
+  color:#fff!important;
   border-color:var(--primary)!important;
 }
 
-button.action-btn {
+button.action-btn{
   background:#fff;
   border:2px solid #cbd5e1;
 }
 
-button.fault-btn {
+button.fault-btn{
   background:#fef3c7;
   border-color:#f59e0b;
   color:#b45309;
   grid-column:span 2;
 }
 
-button.undo-btn {
-  background:#fff;
-  border:2px solid #94a3b8;
-  color:#334155;
-}
-
-button:disabled {
-  opacity:.4;
+button:disabled{
+  opacity:.38;
   cursor:not-allowed;
   transform:none!important;
 }
 
-.toggle-container {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin:6px 0;
-  font-size:.9rem;
+.btn-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:7px;
 }
 
-input[type=text],
-input[type=date],
-select {
-  width:100%;
-  padding:8px;
-  margin-bottom:8px;
-  border:1px solid var(--border);
-  border-radius:4px;
+.btn-grid-4{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:6px;
 }
 
-table {
-  width:100%;
-  border-collapse:collapse;
-  font-size:.8rem;
+.btn-grid-2{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:7px;
+}
+
+.action-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:7px;
+}
+
+.hidden{
+  display:none!important;
+}
+
+/* =====================
+   スコア
+===================== */
+
+.scoreboard{
+  background:#0f172a;
+  color:#fff;
+  padding:14px;
+  border-radius:10px;
   text-align:center;
 }
 
-th,td {
-  border:1px solid var(--border);
-  padding:6px 4px;
-  background:#fff;
+.match-date{
+  font-size:.8rem;
+  color:#38bdf8;
+  margin-bottom:3px;
 }
 
-th {
-  background:#f1f5f9;
+.score-sets{
+  font-size:1rem;
+  color:#94a3b8;
+  margin-bottom:3px;
 }
 
-.log-table-container {
-  overflow-x:auto;
+.score-main{
+  font-size:2rem;
+  font-weight:bold;
+  letter-spacing:2px;
+  color:#38bdf8;
+}
+
+.serve-status{
+  font-size:.85rem;
+  margin-top:5px;
+  color:#fde047;
+  min-height:20px;
+}
+
+.control-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
   margin-bottom:8px;
 }
 
+.undo-btn{
+  background:#fff;
+  border:2px solid #94a3b8;
+}
+
+.save-btn{
+  background:var(--primary);
+  color:#fff;
+  border-color:var(--primary);
+}
+
+/* =====================
+   ログ
+===================== */
+
+.log-table-container{
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  margin-bottom:4px;
+}
+
+table{
+  border-collapse:collapse;
+  font-size:.78rem;
+  text-align:center;
+  width:100%;
+}
+
+th,td{
+  border:1px solid var(--border);
+  padding:6px 5px;
+  background:#fff;
+}
+
+th{
+  background:#f1f5f9;
+  font-weight:bold;
+}
+
+.log-table{
+  min-width:620px;
+}
+
 .log-table th,
-.log-table td {
+.log-table td{
   white-space:nowrap;
-  min-width:45px;
+  min-width:55px;
 }
 
 .log-table th.col-game,
-.log-table td.col-game {
+.log-table td.col-game{
   position:sticky;
   left:0;
-  background:#f1f5f9;
   z-index:10;
   width:45px;
   min-width:45px;
   font-weight:bold;
+  background:#f1f5f9;
 }
 
 .log-table th.col-team,
-.log-table td.col-team {
+.log-table td.col-team{
   position:sticky;
   left:45px;
-  background:#f1f5f9;
   z-index:10;
-  width:90px;
-  min-width:90px;
+  width:85px;
+  min-width:85px;
   font-weight:bold;
+  background:#f1f5f9;
 }
 
-.log-table tbody tr td.col-game,
-.log-table tbody tr td.col-team {
+.log-table tbody td.col-game,
+.log-table tbody td.col-team{
   background:#f8fafc;
 }
 
-.hidden {
-  display:none!important;
+/* =====================
+   スタッツ
+===================== */
+
+.stats-table{
+  min-width:600px;
 }
 
-.modal {
-  position:fixed;
-  top:0;
+.stats-container{
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+.stats-table td:first-child,
+.stats-table th:first-child{
+  position:sticky;
   left:0;
+  z-index:5;
+  background:#f1f5f9;
+  font-weight:bold;
+}
+
+/* =====================
+   モーダル
+===================== */
+
+.modal{
+  position:fixed;
+  inset:0;
   width:100%;
   height:100%;
   background:rgba(0,0,0,.6);
@@ -230,70 +291,139 @@ th {
   align-items:center;
   justify-content:center;
   z-index:100;
+  padding:15px;
 }
 
-.modal-content {
+.modal-content{
   background:#fff;
   padding:20px;
-  border-radius:8px;
+  border-radius:10px;
+  width:100%;
   max-width:400px;
-  width:90%;
 }
 
-.status-text {
-  font-size:.8rem;
-  color:#64748b;
-  margin-top:6px;
+/* =====================
+   画像保存用
+===================== */
+
+.export-area{
+  position:absolute;
+  left:-100000px;
+  top:0;
+  width:900px;
+  background:#fff;
+  color:#111;
+  padding:25px;
 }
 
-@media print {
-  body {
+.export-title{
+  font-size:24px;
+  font-weight:bold;
+  text-align:center;
+  margin-bottom:8px;
+}
+
+.export-score{
+  text-align:center;
+  font-size:20px;
+  font-weight:bold;
+  margin-bottom:15px;
+}
+
+.export-section-title{
+  font-size:17px;
+  font-weight:bold;
+  margin:15px 0 7px;
+}
+
+.export-area table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:12px;
+}
+
+.export-area th,
+.export-area td{
+  border:1px solid #999;
+  padding:6px;
+  text-align:center;
+}
+
+.export-area th{
+  background:#eee;
+}
+
+/* =====================
+   PC
+===================== */
+
+@media(min-width:700px){
+  body{
+    padding:18px;
+  }
+
+  .card{
+    padding:16px;
+  }
+
+  button{
+    min-height:44px;
+  }
+}
+
+/* =====================
+   印刷
+===================== */
+
+@media print{
+  body{
     background:#fff;
     padding:0;
   }
 
-  .no-print {
+  .no-print{
     display:none!important;
   }
 
-  .card {
+  .card{
     border:none;
     box-shadow:none;
     padding:4px;
     margin-bottom:8px;
   }
 
-  .scoreboard {
+  .scoreboard{
     background:#000!important;
     color:#fff!important;
     -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
   }
 }
 </style>
+
 </head>
 
 <body>
 
 <div class="container">
 
-<!-- =========================
+<!-- =====================
      初期設定
-========================= -->
+===================== -->
 
 <div id="setup-screen" class="card">
 
 <h2>試合初期設定</h2>
 
-<label>試合日</label>
-<input type="date" id="match-date-input">
+<label>試合日</label> <input type="date" id="match-date-input">
 
 <div style="display:flex;gap:8px;">
-  <div style="flex:1;">
+  <div style="flex:1">
     <label>ペアA チーム名</label>
     <input type="text" id="teamA-name" value="ペアA">
   </div>
 
-  <div style="flex:1;">
+  <div style="flex:1">
     <label>ペアB チーム名</label>
     <input type="text" id="teamB-name" value="ペアB">
   </div>
@@ -313,243 +443,230 @@ th {
   <input type="text" id="pB2" value="選手b">
 </div>
 
-<label>ルール</label>
+<label>ルール</label> <select id="rule-select">
 
-<select id="rule-select">
   <option value="6noadd">6ゲーム先取 (ノーアド)</option>
   <option value="6semiadd">6ゲーム先取 (セミアド)</option>
   <option value="1set">1セットマッチ (6-6タイブレーク)</option>
 </select>
 
-<label>第1ゲーム サーバー</label>
-<select id="first-server"></select>
+<label>第1ゲーム サーバー</label> <select id="first-server"></select>
 
-<div class="card"
-     style="margin-top:12px;background:#f8fafc;border:1px solid var(--border);">
+<div class="card" style="margin-top:10px;background:#f8fafc;">
+  <label style="font-weight:bold;display:block;margin-bottom:7px;">
+    計測モード
+  </label>
 
-<label style="font-weight:bold;margin-bottom:6px;display:block;">
-計測モードの選択
-</label>
+  <div style="display:flex;flex-direction:column;gap:6px;">
+    <label>
+      <input type="radio" name="mode-type" value="simple" checked>
+      シンプルモード（ペア単位）
+    </label>
 
-<div style="display:flex;flex-direction:column;gap:6px;font-size:.9rem;">
-
+```
 <label>
-<input type="radio" name="mode-type" value="simple" checked>
-シンプルモード（ペア単位で記録）
-</label>
-
-<label>
-<input type="radio" name="mode-type" value="player">
-選手別モード（どの選手が打ったか記録）
+  <input type="radio" name="mode-type" value="player">
+  選手別モード
 </label>
 
 <label>
-<input type="radio" name="mode-type" value="detail">
-詳細モード（選手別 ＋ フォア/バック記録）
+  <input type="radio" name="mode-type" value="detail">
+  詳細モード（選手別＋フォア/バック）
 </label>
+```
 
-</div>
+  </div>
 </div>
 
 <button
-style="width:100%;background:var(--primary);color:#fff;margin-top:8px;"
+style="width:100%;background:var(--primary);color:#fff;border-color:var(--primary);"
 onclick="startGame()">
-試合開始
-</button>
+試合開始 </button>
 
 </div>
 
-
-<!-- =========================
+<!-- =====================
      試合画面
-========================= -->
+===================== -->
 
 <div id="match-screen" class="hidden">
 
 <div class="card scoreboard">
 
-<div class="match-date" id="display-match-date"></div>
+  <div class="match-date" id="display-match-date"></div>
 
-<div class="score-sets" id="game-score">
-ゲームスコア: 0 - 0
+  <div class="score-sets" id="game-score">
+    ゲームスコア: 0 - 0
+  </div>
+
+  <div class="score-main" id="point-score">
+    0 - 0
+  </div>
+
+  <div class="serve-status" id="serve-info">
+    サーバー: -
+  </div>
+
 </div>
 
-<div class="score-main" id="point-score">
-0 - 0
-</div>
-
-<div class="serve-status" id="serve-info">
-サーバー: -
-</div>
-
-</div>
-
+<!-- 操作ボタン -->
 
 <div class="no-print">
 
+<div class="control-row">
+
+<button
+ class="undo-btn"
+ id="btn-undo"
+ onclick="undoLast()">
+↩ 1個戻る </button>
+
+<button
+ class="save-btn"
+ onclick="saveAsImage()">
+📸 画像保存 </button>
+
+</div>
+
 <!-- 打点 -->
 
-<div id="detail-card"
-     class="card hidden"
-     style="padding:10px 16px;">
+<div id="detail-card" class="card hidden">
 
-<div class="toggle-container">
-<span style="font-weight:bold;">打点選択</span>
-</div>
+  <div style="font-size:.8rem;color:var(--muted);margin-bottom:5px;">
+    打点選択
+  </div>
 
-<div id="side-buttons"
-     class="btn-grid"
-     style="margin-top:8px;">
+  <div id="side-buttons" class="btn-grid">
+    <button onclick="selectSide('フォア')" id="btn-fore">
+      フォア
+    </button>
 
-<button
-onclick="selectSide('フォア')"
-id="btn-fore">
-フォア
+```
+<button onclick="selectSide('バック')" id="btn-back">
+  バック
 </button>
+```
 
-<button
-onclick="selectSide('バック')"
-id="btn-back">
-バック
-</button>
+  </div>
 
 </div>
-</div>
 
-
-<!-- 選手・ペア -->
+<!-- 選手 -->
 
 <div class="card">
 
-<div
-style="font-size:.8rem;color:#64748b;margin-bottom:4px;"
-id="selector-label">
-1. ポイントに関与した選択
+  <div
+    style="font-size:.8rem;color:var(--muted);margin-bottom:5px;"
+    id="selector-label">
+    1. ポイントに関与した選手
+  </div>
+
+  <div id="selector-container"></div>
+
 </div>
-
-<div id="selector-container"></div>
-
-</div>
-
 
 <!-- アクション -->
 
 <div class="card">
 
-<div style="font-size:.8rem;color:#64748b;margin-bottom:4px;">
-2. アクション・要因を選択
-</div>
+  <div style="font-size:.8rem;color:var(--muted);margin-bottom:5px;">
+    2. アクション・要因
+  </div>
 
-<div class="btn-grid">
+  <div class="action-grid">
 
+```
 <button
-class="fault-btn"
-id="btn-fault"
-onclick="handleFault()">
-1st Fault
+  class="fault-btn"
+  id="btn-fault"
+  onclick="handleFault()">
+  1st Fault
 </button>
 
 <button
-class="action-btn"
-id="btn-ace"
-onclick="recordPoint('サービスエース')">
-サービスエース
+  class="action-btn"
+  id="btn-ace"
+  onclick="recordPoint('サービスエース')">
+  サービスエース
 </button>
 
 <button
-class="action-btn"
-id="btn-df"
-onclick="recordPoint('ダブルフォルト')">
-ダブルフォルト
+  class="action-btn"
+  id="btn-df"
+  onclick="recordPoint('ダブルフォルト')">
+  ダブルフォルト
 </button>
 
 <button
-class="action-btn"
-id="btn-strokeW"
-onclick="recordPoint('ストロークウィナー')">
-ストロークウィナー
+  class="action-btn"
+  onclick="recordPoint('ストロークウィナー')">
+  ストロークウィナー
 </button>
 
 <button
-class="action-btn"
-id="btn-strokeE"
-onclick="recordPoint('ストロークエラー')">
-ストロークエラー
+  class="action-btn"
+  onclick="recordPoint('ストロークエラー')">
+  ストロークエラー
 </button>
 
 <button
-class="action-btn"
-id="btn-volleyW"
-onclick="recordPoint('ボレーウィナー')">
-ボレーウィナー
+  class="action-btn"
+  onclick="recordPoint('ボレーウィナー')">
+  ボレーウィナー
 </button>
 
 <button
-class="action-btn"
-id="btn-volleyE"
-onclick="recordPoint('ボレーエラー')">
-ボレーエラー
+  class="action-btn"
+  onclick="recordPoint('ボレーエラー')">
+  ボレーエラー
 </button>
 
 <button
-class="action-btn"
-id="btn-returnW"
-onclick="recordPoint('リターンエース')">
-リターンエース
+  class="action-btn"
+  id="btn-returnW"
+  onclick="recordPoint('リターンエース')">
+  リターンエース
 </button>
 
 <button
-class="action-btn"
-id="btn-returnE"
-onclick="recordPoint('リターンエラー')">
-リターンエラー
+  class="action-btn"
+  id="btn-returnE"
+  onclick="recordPoint('リターンエラー')">
+  リターンエラー
 </button>
+```
 
-</div>
-
-<div
-id="fault-status"
-class="status-text">
-</div>
-
-</div>
-
-
-<!-- Undo -->
-
-<div class="card">
-
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-
-<button
-class="undo-btn"
-id="btn-undo"
-onclick="undoLast()">
-↩ 1個戻る
-</button>
-
-<button
-onclick="window.print()"
-style="background:var(--primary);color:#fff;border-color:var(--primary);">
-画像/PDF保存
-</button>
+  </div>
 
 </div>
 
 </div>
 
-</div>
-
-
-<!-- =========================
+<!-- =====================
      ログ
-========================= -->
+===================== -->
 
 <div class="card">
 
-<h3 style="margin-bottom:8px;">
+<div style="
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:8px;
+margin-bottom:8px;
+">
+
+<h3 style="margin:0;">
 ゲーム別ポイントログ
 </h3>
+
+<button
+class="no-print"
+style="padding:7px 10px;font-size:.75rem;"
+onclick="window.print()">
+PDF/印刷 </button>
+
+</div>
 
 <div class="log-table-container">
 
@@ -560,6 +677,13 @@ style="background:var(--primary);color:#fff;border-color:var(--primary);">
 <th class="col-game">ゲーム</th>
 <th class="col-team">チーム</th>
 <th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+<th>5</th>
+<th>6</th>
+<th>7</th>
+<th>8</th>
 </tr>
 </thead>
 
@@ -569,16 +693,11 @@ style="background:var(--primary);color:#fff;border-color:var(--primary);">
 
 </div>
 
-<div class="status-text">
-※「*」= 1stサーブフォルト
 </div>
 
-</div>
-
-
-<!-- =========================
+<!-- =====================
      スタッツ
-========================= -->
+===================== -->
 
 <div class="card">
 
@@ -586,16 +705,12 @@ style="background:var(--primary);color:#fff;border-color:var(--primary);">
 スタッツ集計
 </h3>
 
-<div style="overflow-x:auto;">
+<div class="stats-container">
 
-<table id="stats-table">
+<table class="stats-table" id="stats-table">
 
 <thead>
-<tr id="table-header-row">
-<th>項目</th>
-<th>ペアA</th>
-<th>ペアB</th>
-</tr>
+<tr id="table-header-row"></tr>
 </thead>
 
 <tbody></tbody>
@@ -610,10 +725,9 @@ style="background:var(--primary);color:#fff;border-color:var(--primary);">
 
 </div>
 
-
-<!-- =========================
-     2ゲーム目サーバー
-========================= -->
+<!-- =====================
+     サーバーモーダル
+===================== -->
 
 <div id="server-modal" class="modal hidden">
 
@@ -621,27 +735,35 @@ style="background:var(--primary);color:#fff;border-color:var(--primary);">
 
 <h3>2ゲーム目のサーバー選択</h3>
 
-<p>
+<p style="font-size:.9rem;">
 相手ペアの最初のサーバーを選択してください。
 </p>
 
 <select id="second-server-select"></select>
 
 <button
-style="width:100%;background:var(--primary);color:#fff;margin-top:12px;"
+style="width:100%;background:var(--primary);color:#fff;margin-top:8px;"
 onclick="confirmSecondServer()">
-決定
-</button>
+決定 </button>
 
 </div>
 
 </div>
 
+<!-- =====================
+     画像生成用DOM
+===================== -->
+
+<div id="export-area" class="export-area"></div>
+
+<!-- html2canvas -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
 
 /* =========================================================
-   状態
+   STATE
 ========================================================= */
 
 let teamNames = {
@@ -662,9 +784,9 @@ let serveOrder = [];
 let currentServerIdx = 0;
 
 let isSecondServe = false;
+let pendingFirstFault = false;
 
 let matchDateStr = '';
-
 let modeType = 'simple';
 
 let games = {
@@ -684,170 +806,122 @@ let selectedSide = '';
 let isMatchOver = false;
 
 let stats = {};
-
 let gameLogs = [];
 
-let historyStack = [];
-
-const pointLabels = [
-  '0',
-  '15',
-  '30',
-  '40'
-];
+/* Undo用 */
+let history = [];
 
 
 /* =========================================================
    初期化
 ========================================================= */
 
-window.onload = function() {
-
-  loadSettings();
-
-  setToday();
-
-  setupServerOptions();
-
-};
-
-
-/* =========================================================
-   設定保存
-========================================================= */
-
-function loadSettings() {
+window.onload = function(){
 
   const saved =
     localStorage.getItem('tennis_tool_settings');
 
-  if (!saved) return;
+  if(saved){
 
-  try {
+    try{
 
-    const data =
-      JSON.parse(saved);
+      const data = JSON.parse(saved);
 
-    if (data.teamA)
-      document.getElementById('teamA-name').value =
-        data.teamA;
+      if(data.teamA)
+        document.getElementById('teamA-name').value = data.teamA;
 
-    if (data.teamB)
-      document.getElementById('teamB-name').value =
-        data.teamB;
+      if(data.teamB)
+        document.getElementById('teamB-name').value = data.teamB;
 
-    if (data.pA1)
-      document.getElementById('pA1').value =
-        data.pA1;
+      if(data.pA1)
+        document.getElementById('pA1').value = data.pA1;
 
-    if (data.pA2)
-      document.getElementById('pA2').value =
-        data.pA2;
+      if(data.pA2)
+        document.getElementById('pA2').value = data.pA2;
 
-    if (data.pB1)
-      document.getElementById('pB1').value =
-        data.pB1;
+      if(data.pB1)
+        document.getElementById('pB1').value = data.pB1;
 
-    if (data.pB2)
-      document.getElementById('pB2').value =
-        data.pB2;
+      if(data.pB2)
+        document.getElementById('pB2').value = data.pB2;
 
-  } catch(e) {}
+    }catch(e){}
 
-}
+  }
 
-
-function setToday() {
 
   const today = new Date();
 
-  const yyyy =
-    today.getFullYear();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth()+1).padStart(2,'0');
+  const dd = String(today.getDate()).padStart(2,'0');
 
-  const mm =
-    String(today.getMonth()+1).padStart(2,'0');
-
-  const dd =
-    String(today.getDate()).padStart(2,'0');
-
-  document.getElementById(
-    'match-date-input'
-  ).value =
+  document.getElementById('match-date-input').value =
     `${yyyy}-${mm}-${dd}`;
 
-}
+
+  updateSetupOptions();
 
 
-function setupServerOptions() {
-
-  const ids = [
+  [
     'teamA-name',
     'teamB-name',
     'pA1',
     'pA2',
     'pB1',
     'pB2'
-  ];
+  ].forEach(id=>{
 
-  ids.forEach(id => {
-
-    document.getElementById(id)
-      .addEventListener(
-        'input',
-        renderFirstServerOptions
-      );
+    document
+      .getElementById(id)
+      .addEventListener('input',updateSetupOptions);
 
   });
 
-  renderFirstServerOptions();
-
-}
+};
 
 
-function renderFirstServerOptions() {
+/* =========================================================
+   初期設定のサーバー選択肢
+========================================================= */
+
+function updateSetupOptions(){
 
   const tA =
-    document.getElementById('teamA-name').value ||
-    'ペアA';
+    document.getElementById('teamA-name').value || 'ペアA';
 
   const tB =
-    document.getElementById('teamB-name').value ||
-    'ペアB';
+    document.getElementById('teamB-name').value || 'ペアB';
 
   const pA1 =
-    document.getElementById('pA1').value ||
-    '選手A';
+    document.getElementById('pA1').value || '選手A';
 
   const pA2 =
-    document.getElementById('pA2').value ||
-    '選手a';
+    document.getElementById('pA2').value || '選手a';
 
   const pB1 =
-    document.getElementById('pB1').value ||
-    '選手B';
+    document.getElementById('pB1').value || '選手B';
 
   const pB2 =
-    document.getElementById('pB2').value ||
-    '選手b';
+    document.getElementById('pB2').value || '選手b';
 
-  document.getElementById(
-    'first-server'
-  ).innerHTML = `
+
+  document.getElementById('first-server').innerHTML = `
 
     <option value="A1">
-      ${pA1} (${tA})
+      ${escapeHtml(pA1)} (${escapeHtml(tA)})
     </option>
 
     <option value="A2">
-      ${pA2} (${tA})
+      ${escapeHtml(pA2)} (${escapeHtml(tA)})
     </option>
 
     <option value="B1">
-      ${pB1} (${tB})
+      ${escapeHtml(pB1)} (${escapeHtml(tB)})
     </option>
 
     <option value="B2">
-      ${pB2} (${tB})
+      ${escapeHtml(pB2)} (${escapeHtml(tB)})
     </option>
 
   `;
@@ -859,42 +933,28 @@ function renderFirstServerOptions() {
    試合開始
 ========================================================= */
 
-function startGame() {
+function startGame(){
 
   teamNames.A =
-    document.getElementById(
-      'teamA-name'
-    ).value || 'ペアA';
+    document.getElementById('teamA-name').value || 'ペアA';
 
   teamNames.B =
-    document.getElementById(
-      'teamB-name'
-    ).value || 'ペアB';
+    document.getElementById('teamB-name').value || 'ペアB';
 
   players.A1 =
-    document.getElementById(
-      'pA1'
-    ).value || '選手A';
+    document.getElementById('pA1').value || '選手A';
 
   players.A2 =
-    document.getElementById(
-      'pA2'
-    ).value || '選手a';
+    document.getElementById('pA2').value || '選手a';
 
   players.B1 =
-    document.getElementById(
-      'pB1'
-    ).value || '選手B';
+    document.getElementById('pB1').value || '選手B';
 
   players.B2 =
-    document.getElementById(
-      'pB2'
-    ).value || '選手b';
+    document.getElementById('pB2').value || '選手b';
 
   rule =
-    document.getElementById(
-      'rule-select'
-    ).value;
+    document.getElementById('rule-select').value;
 
   modeType =
     document.querySelector(
@@ -902,9 +962,8 @@ function startGame() {
     ).value;
 
   matchDateStr =
-    document.getElementById(
-      'match-date-input'
-    ).value;
+    document.getElementById('match-date-input').value;
+
 
   localStorage.setItem(
     'tennis_tool_settings',
@@ -919,16 +978,14 @@ function startGame() {
   );
 
 
-  serveOrder = [];
-
-  serveOrder[0] =
-    document.getElementById(
-      'first-server'
-    ).value;
+  serveOrder = [
+    document.getElementById('first-server').value
+  ];
 
   currentServerIdx = 0;
 
   isSecondServe = false;
+  pendingFirstFault = false;
 
   games = {
     A:0,
@@ -940,37 +997,6 @@ function startGame() {
     B:0
   };
 
-  stats = {};
-
-  Object.keys(players).forEach(
-    key => {
-
-      stats[key] = {
-
-        serve1In:0,
-        serve1Total:0,
-
-        serve2In:0,
-        serve2Total:0,
-
-        ace:0,
-        df:0,
-
-        strokeW:0,
-        strokeE:0,
-
-        volleyW:0,
-        volleyE:0,
-
-        returnW:0,
-        returnE:0
-
-      };
-
-    }
-  );
-
-
   gameLogs = [
     {
       A:[],
@@ -978,43 +1004,70 @@ function startGame() {
     }
   ];
 
-  historyStack = [];
+  history = [];
+
+  isMatchOver = false;
 
   selectedPlayer = null;
   selectedPair = null;
   selectedSide = '';
 
-  isMatchOver = false;
+
+  stats = {};
+
+  Object.keys(players).forEach(p=>{
+
+    stats[p] = {
+
+      serve1In:0,
+      serve1Total:0,
+
+      serve2In:0,
+      serve2Total:0,
+
+      ace:0,
+      df:0,
+
+      strokeW:0,
+      strokeE:0,
+
+      volleyW:0,
+      volleyE:0,
+
+      returnW:0,
+      returnE:0
+
+    };
+
+  });
 
 
-  document.getElementById(
-    'display-match-date'
-  ).innerText =
+  document.getElementById('display-match-date').innerText =
     matchDateStr;
 
 
-  if (modeType === 'detail') {
+  if(modeType === 'detail'){
 
-    document.getElementById(
-      'detail-card'
-    ).classList.remove('hidden');
+    document
+      .getElementById('detail-card')
+      .classList.remove('hidden');
 
-  } else {
+  }else{
 
-    document.getElementById(
-      'detail-card'
-    ).classList.add('hidden');
+    document
+      .getElementById('detail-card')
+      .classList.add('hidden');
 
   }
 
 
-  document.getElementById(
-    'setup-screen'
-  ).classList.add('hidden');
+  document
+    .getElementById('setup-screen')
+    .classList.add('hidden');
 
-  document.getElementById(
-    'match-screen'
-  ).classList.remove('hidden');
+  document
+    .getElementById('match-screen')
+    .classList.remove('hidden');
 
 
   renderSelectorButtons();
@@ -1027,115 +1080,85 @@ function startGame() {
 
 
 /* =========================================================
-   Undo用スナップショット
+   Snapshot / Undo
 ========================================================= */
 
-function cloneData(data) {
+function createSnapshot(){
 
-  return JSON.parse(
-    JSON.stringify(data)
-  );
+  return {
+    games:JSON.parse(JSON.stringify(games)),
+    points:JSON.parse(JSON.stringify(points)),
+    stats:JSON.parse(JSON.stringify(stats)),
+    gameLogs:JSON.parse(JSON.stringify(gameLogs)),
 
-}
-
-
-function saveHistory() {
-
-  historyStack.push({
-
-    teamNames:cloneData(teamNames),
-
-    players:cloneData(players),
-
-    rule:rule,
-
-    serveOrder:cloneData(serveOrder),
-
+    serveOrder:[...serveOrder],
     currentServerIdx:currentServerIdx,
 
     isSecondServe:isSecondServe,
-
-    games:cloneData(games),
-
-    points:cloneData(points),
+    pendingFirstFault:pendingFirstFault,
 
     selectedPlayer:selectedPlayer,
-
     selectedPair:selectedPair,
-
     selectedSide:selectedSide,
 
-    isMatchOver:isMatchOver,
-
-    stats:cloneData(stats),
-
-    gameLogs:cloneData(gameLogs)
-
-  });
+    isMatchOver:isMatchOver
+  };
 
 }
 
 
-function undoLast() {
+function restoreSnapshot(s){
 
-  if (historyStack.length === 0)
-    return;
+  games = JSON.parse(JSON.stringify(s.games));
+  points = JSON.parse(JSON.stringify(s.points));
+  stats = JSON.parse(JSON.stringify(s.stats));
+  gameLogs = JSON.parse(JSON.stringify(s.gameLogs));
 
-  const state =
-    historyStack.pop();
+  serveOrder = [...s.serveOrder];
+  currentServerIdx = s.currentServerIdx;
 
+  isSecondServe = s.isSecondServe;
+  pendingFirstFault = s.pendingFirstFault;
 
-  teamNames =
-    cloneData(state.teamNames);
+  selectedPlayer = s.selectedPlayer;
+  selectedPair = s.selectedPair;
+  selectedSide = s.selectedSide;
 
-  players =
-    cloneData(state.players);
+  isMatchOver = s.isMatchOver;
 
-  rule =
-    state.rule;
+  document
+    .getElementById('server-modal')
+    .classList.add('hidden');
 
-  serveOrder =
-    cloneData(state.serveOrder);
-
-  currentServerIdx =
-    state.currentServerIdx;
-
-  isSecondServe =
-    state.isSecondServe;
-
-  games =
-    cloneData(state.games);
-
-  points =
-    cloneData(state.points);
-
-  selectedPlayer =
-    state.selectedPlayer;
-
-  selectedPair =
-    state.selectedPair;
-
-  selectedSide =
-    state.selectedSide;
-
-  isMatchOver =
-    state.isMatchOver;
-
-  stats =
-    cloneData(state.stats);
-
-  gameLogs =
-    cloneData(state.gameLogs);
-
-
-  document.getElementById(
-    'server-modal'
-  ).classList.add('hidden');
-
-
-  renderSelectorButtons();
+  clearSideSelection();
 
   refreshUI();
+
+}
+
+
+function pushHistory(){
+
+  history.push(createSnapshot());
+
+  /* 無限に増えないように */
+  if(history.length > 100){
+    history.shift();
+  }
+
+}
+
+
+function undoLast(){
+
+  if(history.length === 0){
+    return;
+  }
+
+  const previous =
+    history.pop();
+
+  restoreSnapshot(previous);
 
 }
 
@@ -1144,7 +1167,7 @@ function undoLast() {
    UI
 ========================================================= */
 
-function refreshUI() {
+function refreshUI(){
 
   updateDisplay();
 
@@ -1154,17 +1177,8 @@ function refreshUI() {
 
   updateButtonStates();
 
-  updateUndoButton();
-
-}
-
-
-function updateUndoButton() {
-
-  document.getElementById(
-    'btn-undo'
-  ).disabled =
-    historyStack.length === 0;
+  document.getElementById('btn-undo').disabled =
+    history.length === 0;
 
 }
 
@@ -1173,80 +1187,71 @@ function updateUndoButton() {
    選択UI
 ========================================================= */
 
-function renderSelectorButtons() {
+function renderSelectorButtons(){
 
   const container =
-    document.getElementById(
-      'selector-container'
-    );
+    document.getElementById('selector-container');
 
   container.innerHTML = '';
 
 
-  if (
+  if(
     modeType === 'player' ||
     modeType === 'detail'
-  ) {
+  ){
 
-    document.getElementById(
-      'selector-label'
-    ).innerText =
+    document
+      .getElementById('selector-label')
+      .innerText =
       '1. ポイントに関与したプレイヤーを選択';
 
     container.className =
       'btn-grid-4';
 
 
-    Object.keys(players).forEach(
-      key => {
+    Object.keys(players).forEach(key=>{
 
-        const btn =
-          document.createElement(
-            'button'
-          );
+      const btn =
+        document.createElement('button');
 
-        btn.innerText =
-          players[key];
+      btn.innerText =
+        players[key];
 
-        btn.id =
-          `btn-player-${key}`;
+      btn.id =
+        `btn-player-${key}`;
 
-        btn.onclick =
-          () => selectPlayer(key);
+      btn.onclick =
+        ()=>selectPlayer(key);
 
-        container.appendChild(btn);
+      container.appendChild(btn);
 
-      }
-    );
+    });
 
 
-  } else {
+  }else{
 
-    document.getElementById(
-      'selector-label'
-    ).innerText =
+    document
+      .getElementById('selector-label')
+      .innerText =
       '1. ポイントに関与したチームを選択';
 
     container.className =
       'btn-grid-2';
 
 
-    ['A','B'].forEach(pair => {
+    ['A','B'].forEach(pair=>{
 
       const btn =
-        document.createElement(
-          'button'
-        );
+        document.createElement('button');
 
       btn.innerText =
-        `${teamNames[pair]} ` +
-        `(${players[pair+'1']} / ${players[pair+'2']})`;
+        `${teamNames[pair]} (${players[pair+'1']} / ${players[pair+'2']})`;
 
       btn.id =
         `btn-pair-${pair}`;
 
       btn.onclick =
-        () => selectPair(pair);
+        ()=>selectPair(pair);
 
       container.appendChild(btn);
 
@@ -1257,24 +1262,22 @@ function renderSelectorButtons() {
 }
 
 
-function setDefaultServerSelection() {
+function setDefaultServerSelection(){
 
   const server =
     getCurrentServerKey();
 
-  if (
+  if(
     modeType === 'player' ||
     modeType === 'detail'
-  ) {
+  ){
 
     selectPlayer(server);
 
-  } else {
+  }else{
 
     selectPair(
-      server.startsWith('A')
-        ? 'A'
-        : 'B'
+      server.startsWith('A') ? 'A' : 'B'
     );
 
   }
@@ -1282,81 +1285,97 @@ function setDefaultServerSelection() {
 }
 
 
-function selectPlayer(key) {
+function selectPlayer(key){
 
   selectedPlayer = key;
 
-  selectedPair = null;
+  selectedPair =
+    key.startsWith('A') ? 'A' : 'B';
 
-  Object.keys(players).forEach(
-    k => {
 
-      const el =
-        document.getElementById(
-          `btn-player-${k}`
-        );
+  Object.keys(players).forEach(k=>{
 
-      if (el)
-        el.classList.remove(
-          'selected'
-        );
+    const el =
+      document.getElementById(`btn-player-${k}`);
 
+    if(el){
+      el.classList.toggle(
+        'selected',
+        k === key
+      );
     }
-  );
 
-
-  const target =
-    document.getElementById(
-      `btn-player-${key}`
-    );
-
-  if (target)
-    target.classList.add(
-      'selected'
-    );
-
+  });
 
   updateButtonStates();
 
 }
 
 
-function selectPair(pair) {
+function selectPair(pair){
 
   selectedPair = pair;
 
   selectedPlayer = null;
 
 
-  ['A','B'].forEach(
-    p => {
+  ['A','B'].forEach(p=>{
 
-      const el =
-        document.getElementById(
-          `btn-pair-${p}`
-        );
+    const el =
+      document.getElementById(`btn-pair-${p}`);
 
-      if (el)
-        el.classList.remove(
-          'selected'
-        );
+    if(el){
+
+      el.classList.toggle(
+        'selected',
+        p === pair
+      );
 
     }
-  );
 
-
-  const target =
-    document.getElementById(
-      `btn-pair-${pair}`
-    );
-
-  if (target)
-    target.classList.add(
-      'selected'
-    );
-
+  });
 
   updateButtonStates();
+
+}
+
+
+function selectSide(side){
+
+  selectedSide = side;
+
+  document
+    .getElementById('btn-fore')
+    .classList.toggle(
+      'selected',
+      side === 'フォア'
+    );
+
+  document
+    .getElementById('btn-back')
+    .classList.toggle(
+      'selected',
+      side === 'バック'
+    );
+
+}
+
+
+function clearSideSelection(){
+
+  selectedSide = '';
+
+  const fore =
+    document.getElementById('btn-fore');
+
+  const back =
+    document.getElementById('btn-back');
+
+  if(fore)
+    fore.classList.remove('selected');
+
+  if(back)
+    back.classList.remove('selected');
 
 }
 
@@ -1365,7 +1384,7 @@ function selectPair(pair) {
    ボタン状態
 ========================================================= */
 
-function updateButtonStates() {
+function updateButtonStates(){
 
   const fault =
     document.getElementById('btn-fault');
@@ -1382,343 +1401,129 @@ function updateButtonStates() {
   const returnE =
     document.getElementById('btn-returnE');
 
-  const strokeW =
-    document.getElementById('btn-strokeW');
 
-  const strokeE =
-    document.getElementById('btn-strokeE');
-
-  const volleyW =
-    document.getElementById('btn-volleyW');
-
-  const volleyE =
-    document.getElementById('btn-volleyE');
-
-
-  [
-    fault,
-    ace,
-    df,
-    returnW,
-    returnE,
-    strokeW,
-    strokeE,
-    volleyW,
-    volleyE
-  ].forEach(
-    btn => btn.disabled = false
-  );
-
-
-  if (isMatchOver) {
-
-    [
-      fault,
-      ace,
-      df,
-      returnW,
-      returnE,
-      strokeW,
-      strokeE,
-      volleyW,
-      volleyE
-    ].forEach(
-      btn => btn.disabled = true
-    );
-
-    return;
-  }
-
+  fault.disabled = false;
+  ace.disabled = false;
+  df.disabled = false;
 
   /*
-   * サーブ系だけはサーバー本人を
-   * 選択している場合のみ有効。
-   *
-   * リターン系はあえて非活性にしない。
-   * ユーザーがリターンした側を選択して記録できる。
+   * リターンはサーブ中でも常に押せる
    */
-
-  const server =
-    getCurrentServerKey();
-
-  let isServerSelected = false;
-
-  if (
-    modeType === 'player' ||
-    modeType === 'detail'
-  ) {
-
-    isServerSelected =
-      selectedPlayer === server;
-
-  } else {
-
-    const serverPair =
-      server.startsWith('A')
-        ? 'A'
-        : 'B';
-
-    isServerSelected =
-      selectedPair === serverPair;
-
-  }
-
-
-  fault.disabled =
-    !isServerSelected;
-
-  ace.disabled =
-    !isServerSelected;
-
-  df.disabled =
-    !isServerSelected;
-
-
-  /*
-   * リターンは常時操作可能。
-   */
-
   returnW.disabled = false;
   returnE.disabled = false;
 
-}
 
+  if(isMatchOver){
 
-/* =========================================================
-   フォア / バック
-========================================================= */
+    fault.disabled = true;
+    ace.disabled = true;
+    df.disabled = true;
+    returnW.disabled = true;
+    returnE.disabled = true;
 
-function selectSide(side) {
-
-  selectedSide = side;
-
-  document.getElementById(
-    'btn-fore'
-  ).classList.toggle(
-    'selected',
-    side === 'フォア'
-  );
-
-  document.getElementById(
-    'btn-back'
-  ).classList.toggle(
-    'selected',
-    side === 'バック'
-  );
-
-}
-
-
-/* =========================================================
-   サーブ
-========================================================= */
-
-function handleFault() {
-
-  if (isMatchOver)
     return;
 
-
-  const server =
-    getCurrentServerKey();
+  }
 
 
-  saveHistory();
+  /*
+   * サーブ系だけサーバー選択時に限定
+   */
 
+  if(
+    modeType === 'player' ||
+    modeType === 'detail'
+  ){
 
-  if (!isSecondServe) {
+    const server =
+      getCurrentServerKey();
 
-    /*
-     * 1stサーブを外した。
-     * ポイントは進めない。
-     */
+    const serverSelected =
+      selectedPlayer === server;
 
-    stats[server].serve1Total++;
+    fault.disabled =
+      !serverSelected;
 
-    isSecondServe = true;
+    ace.disabled =
+      !serverSelected;
 
+    df.disabled =
+      !serverSelected;
 
-    document.getElementById(
-      'btn-fault'
-    ).innerText =
-      '2nd Fault → ダブルフォルト';
-
-
-    document.getElementById(
-      'fault-status'
-    ).innerText =
-      '1stサーブフォルト記録中。もう一度押すとダブルフォルト。';
-
-
-    /*
-     * ★1st Faultをログに記録
-     *
-     * ただしポイント列は増やさない。
-     * 現在のポイント列に「*」を付ける。
-     */
-
-    const currentGame =
-      gameLogs[
-        gameLogs.length - 1
-      ];
+  }else{
 
     const serverPair =
-      server.startsWith('A')
+      getCurrentServerKey().startsWith('A')
         ? 'A'
         : 'B';
 
-    const index =
-      Math.max(
-        currentGame.A.length,
-        currentGame.B.length
-      );
+    const serverSelected =
+      selectedPair === serverPair;
 
+    fault.disabled =
+      !serverSelected;
 
-    while (
-      currentGame.A.length < index
-    )
-      currentGame.A.push('');
+    ace.disabled =
+      !serverSelected;
 
-    while (
-      currentGame.B.length < index
-    )
-      currentGame.B.push('');
-
-
-    /*
-     * 次に記録されるポイントの
-     * サーバー側に * を仮置き。
-     *
-     * まだポイントが発生していないため、
-     * 最終的な列は次のrecordPointで確定する。
-     */
-
-    if (serverPair === 'A') {
-
-      currentGame.A.push('*');
-
-    } else {
-
-      currentGame.B.push('*');
-
-    }
-
-
-    refreshUI();
-
-    return;
+    df.disabled =
+      !serverSelected;
 
   }
 
 
   /*
-   * 2ndサーブも失敗
+   * 2ndサーブ中はFaultボタンを押させない
    */
-
-  /*
-   * 1st Faultですでに履歴を1回作っているため、
-   * ここでは追加保存しない。
-   *
-   * その履歴からUndoすると、
-   * 1st Fault前まで戻る。
-   */
-
-  recordDoubleFaultAfterFirstFault();
-
-}
-
-
-function recordDoubleFaultAfterFirstFault() {
-
-  const server =
-    getCurrentServerKey();
-
-  /*
-   * 2ndサーブの試行
-   */
-
-  stats[server].serve2Total++;
-  stats[server].df++;
-
-
-  const serverPair =
-    server.startsWith('A')
-      ? 'A'
-      : 'B';
-
-  const winnerPair =
-    serverPair === 'A'
-      ? 'B'
-      : 'A';
-
-
-  /*
-   * 既に1st Faultの「*」が
-   * サーバー側に入っている。
-   *
-   * その同じポイント列を使って
-   * 相手側にDbF(サーバー側)を入れる。
-   */
-
-  const currentGame =
-    gameLogs[
-      gameLogs.length - 1
-    ];
-
-  const index =
-    Math.max(
-      currentGame.A.length,
-      currentGame.B.length
-    ) - 1;
-
-
-  const label =
-    `DbF(${teamNames[serverPair]})`;
-
-
-  if (winnerPair === 'A') {
-
-    currentGame.A[index] =
-      label;
-
-  } else {
-
-    currentGame.B[index] =
-      label;
-
-  }
-
-
-  /*
-   * ポイント加算
-   */
-
-  addPoint(winnerPair);
-
-
-  resetPointState();
-
-  refreshUI();
-
-
-  if (!isMatchOver) {
-
-    setDefaultServerSelection();
-
-    refreshUI();
-
+  if(isSecondServe){
+    fault.disabled = true;
   }
 
 }
 
 
 /* =========================================================
-   アクション略称
+   Fault
 ========================================================= */
 
-function getActionAbbr(action) {
+function handleFault(){
 
-  switch(action) {
+  if(isMatchOver)
+    return;
+
+  if(isSecondServe)
+    return;
+
+
+  pushHistory();
+
+  const server =
+    getCurrentServerKey();
+
+
+  /*
+   * 1st serve失敗
+   */
+
+  stats[server].serve1Total++;
+
+  isSecondServe = true;
+
+  pendingFirstFault = true;
+
+
+  refreshUI();
+
+}
+
+
+/* =========================================================
+   Action
+========================================================= */
+
+function getActionAbbr(action){
+
+  switch(action){
 
     case 'サービスエース':
       return 'SvA';
@@ -1753,133 +1558,128 @@ function getActionAbbr(action) {
 
 
 /* =========================================================
-   通常ポイント
+   Point
 ========================================================= */
 
-function recordPoint(action) {
+function recordPoint(action){
 
-  if (isMatchOver)
+  if(isMatchOver)
     return;
 
+
+  /*
+   * サーバー
+   */
 
   const server =
     getCurrentServerKey();
 
 
   /*
-   * ダブルフォルトは
-   * handleFaultから処理する。
+   * 選択されているプレイヤー/ペア
    */
 
-  if (action === 'ダブルフォルト') {
+  const actorPair =
+    getActorPair();
+
+
+  /*
+   * DFはサーバー側が必ず実行者
+   */
+
+  if(action === 'ダブルフォルト'){
 
     /*
-     * まだ1st Faultを押していない場合でも
-     * ダブルフォルトボタンを押せるようにする。
-     *
-     * その場合は1st + 2ndをまとめて処理。
+     * まだ1st faultを押していない場合でも
+     * 1st/2ndの両方を消費
      */
 
-    saveHistory();
+    if(!isSecondServe){
 
-    stats[server].serve1Total++;
-    stats[server].serve2Total++;
-    stats[server].df++;
-
-    isSecondServe = false;
-
-    const serverPair =
-      server.startsWith('A')
-        ? 'A'
-        : 'B';
-
-    const winnerPair =
-      serverPair === 'A'
-        ? 'B'
-        : 'A';
-
-    const currentGame =
-      gameLogs[
-        gameLogs.length - 1
-      ];
-
-    const label =
-      `DbF(${teamNames[serverPair]})`;
-
-    currentGame[winnerPair].push(label);
-
-    addPoint(winnerPair);
-
-    resetPointState();
-
-    refreshUI();
-
-    if (!isMatchOver) {
-
-      setDefaultServerSelection();
-
-      refreshUI();
+      stats[server].serve1Total++;
 
     }
 
-    return;
-  }
-
-
-  /*
-   * サーブ統計
-   */
-
-  if (!isSecondServe) {
-
-    stats[server].serve1Total++;
-    stats[server].serve1In++;
-
-  } else {
-
     stats[server].serve2Total++;
-    stats[server].serve2In++;
+
+    stats[server].df++;
+
+  }else{
+
+    /*
+     * サーブ系アクションならサーブインを記録
+     */
+
+    if(action === 'サービスエース'){
+
+      if(!isSecondServe){
+
+        stats[server].serve1Total++;
+        stats[server].serve1In++;
+
+      }else{
+
+        stats[server].serve2Total++;
+        stats[server].serve2In++;
+
+      }
+
+    }
 
   }
-
-
-  /*
-   * 選択された「行為者」
-   */
-
-  const actor =
-    getSelectedActor();
 
 
   /*
    * 個人スタッツ
    */
 
-  if (
+  if(
     modeType !== 'simple' &&
-    actor
-  ) {
+    selectedPlayer
+  ){
 
-    if (action === 'サービスエース')
-      stats[actor].ace++;
+    const p =
+      selectedPlayer;
 
-    if (action === 'ストロークウィナー')
-      stats[actor].strokeW++;
 
-    if (action === 'ストロークエラー')
-      stats[actor].strokeE++;
+    if(action === 'サービスエース')
+      stats[p].ace++;
 
-    if (action === 'ボレーウィナー')
-      stats[actor].volleyW++;
+    if(action === 'ストロークウィナー')
+      stats[p].strokeW++;
 
-    if (action === 'ボレーエラー')
-      stats[actor].volleyE++;
+    if(action === 'ストロークエラー')
+      stats[p].strokeE++;
 
-    if (action === 'リターンエース')
-      stats[actor].returnW++;
+    if(action === 'ボレーウィナー')
+      stats[p].volleyW++;
 
-    if (action === 'リターンエラー')
-      stats[actor].returnE++;
+    if(action === 'ボレーエラー')
+      stats[p].volleyE++;
+
+    if(action === 'リターンエース')
+      stats[p].returnW++;
+
+    if(action === 'リターンエラー')
+      stats[p].returnE++;
+
+  }
+
+
+  /*
+   * DF以外の通常ポイントでは
+   * 選択された選手/ペアをアクターとする。
+   *
+   * DFだけはサーバーがアクター。
+   */
+
+  let actualActorPair =
+    actorPair;
+
+  if(action === 'ダブルフォルト'){
+
+    actualActorPair =
+      server.startsWith('A') ? 'A' : 'B';
 
   }
 
@@ -1891,55 +1691,81 @@ function recordPoint(action) {
   const winnerPair =
     getWinnerPair(
       action,
-      actor
+      actualActorPair
     );
 
 
   /*
-   * ログ文字列
+   * ログ
    */
 
-  let label =
+  let abbr =
     getActionAbbr(action);
 
 
   /*
-   * 詳細モードなら
-   * フォア/バックを付ける。
+   * 1st faultがあったポイントには *
    */
 
-  if (
-    modeType === 'detail' &&
-    selectedSide
-  ) {
+  if(pendingFirstFault){
 
-    label +=
-      `/${selectedSide === 'フォア' ? 'F' : 'B'}`;
+    abbr =
+      '*' + abbr;
 
   }
 
 
   /*
-   * 行為者名を付ける。
+   * 詳細モードならフォア/バック
+   *
+   * DFには付けない
    */
 
-  if (
-    modeType !== 'simple' &&
-    actor
-  ) {
+  if(
+    modeType === 'detail' &&
+    selectedSide &&
+    action !== 'ダブルフォルト'
+  ){
 
-    label +=
-      `(${players[actor]})`;
+    abbr +=
+      `(${selectedSide === 'フォア' ? 'F' : 'B'})`;
 
-  } else {
+  }
 
-    const actorPair =
-      getActorPair();
 
-    if (actorPair) {
+  /*
+   * 誰が関与したか
+   */
 
-      label +=
-        `(${teamNames[actorPair]})`;
+  if(action === 'ダブルフォルト'){
+
+    /*
+     * 例:
+     * AがDF
+     * → B側ログに DbF(ペアA)
+     */
+
+    abbr +=
+      `(${actualActorPair === 'A'
+        ? teamNames.A
+        : teamNames.B})`;
+
+  }else{
+
+    if(
+      modeType !== 'simple' &&
+      selectedPlayer
+    ){
+
+      abbr +=
+        `(${players[selectedPlayer]})`;
+
+    }else{
+
+      abbr +=
+        `(${actualActorPair === 'A'
+          ? teamNames.A
+          : teamNames.B})`;
 
     }
 
@@ -1947,119 +1773,22 @@ function recordPoint(action) {
 
 
   /*
-   * エラーの場合：
-   *
-   * 例）
-   * Aがストロークエラー
-   *
-   * B側に
-   * StE(ペアA)
-   *
-   * が入る。
-   *
-   * ウィナーの場合：
-   * 行為者側に入る。
+   * ログ追加
    */
 
   const currentGame =
-    gameLogs[
-      gameLogs.length - 1
-    ];
+    gameLogs[gameLogs.length-1];
 
 
-  /*
-   * 直前の1st Faultの「*」が
-   * すでに存在している場合。
-   *
-   * その列を再利用する。
-   */
+  if(winnerPair === 'A'){
 
-  let column =
-    Math.max(
-      currentGame.A.length,
-      currentGame.B.length
-    ) - 1;
-
-
-  const hasPendingFault =
-    isSecondServe;
-
-
-  if (hasPendingFault) {
-
-    /*
-     * 1st Faultで作った列を利用。
-     *
-     * 既存の * を削除して
-     * ポイント結果に置き換える。
-     */
-
-    if (column < 0)
-      column = 0;
-
-    if (currentGame.A.length <= column)
-      currentGame.A.push('');
-
-    if (currentGame.B.length <= column)
-      currentGame.B.push('');
-
-  } else {
-
-    column =
-      Math.max(
-        currentGame.A.length,
-        currentGame.B.length
-      );
-
-    while (
-      currentGame.A.length < column
-    )
-      currentGame.A.push('');
-
-    while (
-      currentGame.B.length < column
-    )
-      currentGame.B.push('');
-
-    currentGame.A.push('');
+    currentGame.A.push(abbr);
     currentGame.B.push('');
 
-  }
+  }else{
 
-
-  /*
-   * 1st Faultの「*」を
-   * サーバー側の同じ列に維持する。
-   *
-   * ただし結果を同じセルに上書きすると
-   * * が消えるので、
-   * 例えば
-   *
-   * StW(選手/F)*
-   *
-   * のように付ける。
-   */
-
-  if (hasPendingFault) {
-
-    label += '*';
-
-  }
-
-
-  /*
-   * どちら側にログを書くか
-   */
-
-  if (winnerPair === 'A') {
-
-    currentGame.A[column] =
-      label;
-
-  } else {
-
-    currentGame.B[column] =
-      label;
+    currentGame.A.push('');
+    currentGame.B.push(abbr);
 
   }
 
@@ -2071,52 +1800,43 @@ function recordPoint(action) {
   addPoint(winnerPair);
 
 
-  resetPointState();
+  /*
+   * 次ポイント
+   */
+
+  isSecondServe = false;
+  pendingFirstFault = false;
+
+  clearSideSelection();
 
 
-  refreshUI();
+  /*
+   * 試合終了していなければ
+   * 次のサーバー選択
+   */
 
-
-  if (!isMatchOver) {
+  if(!isMatchOver){
 
     setDefaultServerSelection();
 
-    refreshUI();
-
   }
+
+
+  refreshUI();
 
 }
 
 
 /* =========================================================
-   選択された行為者
+   Actor
 ========================================================= */
 
-function getSelectedActor() {
+function getActorPair(){
 
-  if (
-    modeType === 'player' ||
-    modeType === 'detail'
-  ) {
-
-    return selectedPlayer;
-
-  }
-
-  return null;
-
-}
-
-
-function getActorPair() {
-
-  if (
-    modeType === 'player' ||
-    modeType === 'detail'
-  ) {
-
-    if (!selectedPlayer)
-      return null;
+  if(
+    modeType !== 'simple' &&
+    selectedPlayer
+  ){
 
     return selectedPlayer.startsWith('A')
       ? 'A'
@@ -2124,67 +1844,38 @@ function getActorPair() {
 
   }
 
-  return selectedPair;
+
+  if(selectedPair){
+
+    return selectedPair;
+
+  }
+
+
+  return getCurrentServerKey().startsWith('A')
+    ? 'A'
+    : 'B';
 
 }
 
 
 /* =========================================================
-   ポイント勝者
+   Winner
 ========================================================= */
 
-function getWinnerPair(action, actor) {
-
-  const isError =
-    action === 'ダブルフォルト' ||
-    action.includes('エラー');
-
+function getWinnerPair(action,actorPair){
 
   /*
-   * エラー
+   * DF / エラー
+   * → アクター側が失点
    */
 
-  if (isError) {
+  if(
+    action === 'ダブルフォルト' ||
+    action.includes('エラー')
+  ){
 
-    let errorPair;
-
-
-    if (
-      modeType !== 'simple'
-    ) {
-
-      if (actor) {
-
-        errorPair =
-          actor.startsWith('A')
-            ? 'A'
-            : 'B';
-
-      } else {
-
-        errorPair =
-          getCurrentServerKey()
-            .startsWith('A')
-            ? 'A'
-            : 'B';
-
-      }
-
-    } else {
-
-      errorPair =
-        selectedPair ||
-        (
-          getCurrentServerKey()
-            .startsWith('A')
-            ? 'A'
-            : 'B'
-        );
-
-    }
-
-
-    return errorPair === 'A'
+    return actorPair === 'A'
       ? 'B'
       : 'A';
 
@@ -2192,98 +1883,43 @@ function getWinnerPair(action, actor) {
 
 
   /*
-   * ウィナー
+   * ウィナー系
+   * → アクター側が得点
    */
 
-  if (
-    modeType !== 'simple'
-  ) {
-
-    if (actor)
-      return actor.startsWith('A')
-        ? 'A'
-        : 'B';
-
-
-    return getCurrentServerKey()
-      .startsWith('A')
-      ? 'A'
-      : 'B';
-
-  }
-
-
-  return selectedPair ||
-    (
-      getCurrentServerKey()
-        .startsWith('A')
-        ? 'A'
-        : 'B'
-    );
+  return actorPair;
 
 }
 
 
 /* =========================================================
-   ポイント状態リセット
+   Game
 ========================================================= */
 
-function resetPointState() {
-
-  isSecondServe = false;
-
-  selectedSide = '';
-
-
-  if (modeType === 'detail') {
-
-    document.getElementById(
-      'btn-fore'
-    ).classList.remove('selected');
-
-    document.getElementById(
-      'btn-back'
-    ).classList.remove('selected');
-
-  }
-
-
-  document.getElementById(
-    'btn-fault'
-  ).innerText =
-    '1st Fault';
-
-
-  document.getElementById(
-    'fault-status'
-  ).innerText = '';
-
-}
-
-
-/* =========================================================
-   ゲーム進行
-========================================================= */
-
-function addPoint(pair) {
+function addPoint(pair){
 
   points[pair]++;
 
   let gameWon = false;
+
+  const opponent =
+    pair === 'A' ? 'B' : 'A';
 
 
   /*
    * ノーアド
    */
 
-  if (
-    rule === '6noadd' &&
-    points[pair] >= 4 &&
-    points[pair] !==
-      points[pair === 'A' ? 'B' : 'A']
-  ) {
+  if(rule === '6noadd'){
 
-    gameWon = true;
+    if(
+      points[pair] >= 4 &&
+      points[pair] !== points[opponent]
+    ){
+
+      gameWon = true;
+
+    }
 
   }
 
@@ -2292,15 +1928,12 @@ function addPoint(pair) {
    * セミアド
    */
 
-  else if (
-    rule === '6semiadd'
-  ) {
+  else if(rule === '6semiadd'){
 
-    if (
+    if(
       points[pair] >= 4 &&
-      points[pair] -
-      points[pair === 'A' ? 'B' : 'A'] >= 1
-    ) {
+      points[pair] - points[opponent] >= 1
+    ){
 
       gameWon = true;
 
@@ -2310,18 +1943,15 @@ function addPoint(pair) {
 
 
   /*
-   * 通常セット
+   * 通常
    */
 
-  else if (
-    rule === '1set'
-  ) {
+  else if(rule === '1set'){
 
-    if (
+    if(
       points[pair] >= 4 &&
-      points[pair] -
-      points[pair === 'A' ? 'B' : 'A'] >= 2
-    ) {
+      points[pair] - points[opponent] >= 2
+    ){
 
       gameWon = true;
 
@@ -2330,7 +1960,7 @@ function addPoint(pair) {
   }
 
 
-  if (gameWon) {
+  if(gameWon){
 
     games[pair]++;
 
@@ -2345,19 +1975,19 @@ function addPoint(pair) {
 
 
 /* =========================================================
-   ゲーム終了
+   Game End
 ========================================================= */
 
-function onGameEnd() {
+function onGameEnd(){
 
   /*
-   * 6ゲーム差2
+   * 6ゲーム先取
    */
 
-  if (
+  if(
     games.A >= 6 &&
     games.A - games.B >= 2
-  ) {
+  ){
 
     endMatch(
       `${teamNames.A}の勝利！`
@@ -2368,10 +1998,10 @@ function onGameEnd() {
   }
 
 
-  if (
+  if(
     games.B >= 6 &&
     games.B - games.A >= 2
-  ) {
+  ){
 
     endMatch(
       `${teamNames.B}の勝利！`
@@ -2383,14 +2013,14 @@ function onGameEnd() {
 
 
   /*
-   * ノーアド6ゲーム先取
+   * ノーアド
    */
 
-  if (
+  if(
     rule === '6noadd' &&
     (games.A === 6 || games.B === 6) &&
     games.A !== games.B
-  ) {
+  ){
 
     endMatch(
       games.A > games.B
@@ -2418,17 +2048,17 @@ function onGameEnd() {
 
 
   /*
-   * 2ゲーム目サーバー
+   * 2ゲーム目
    */
 
-  if (
+  if(
     totalGames === 1 &&
     serveOrder.length < 2
-  ) {
+  ){
 
     showSecondServerModal();
 
-  } else {
+  }else{
 
     currentServerIdx =
       (currentServerIdx + 1) % 4;
@@ -2441,81 +2071,64 @@ function onGameEnd() {
 
 
 /* =========================================================
-   試合終了
+   Match End
 ========================================================= */
 
-function endMatch(message) {
+function endMatch(message){
 
   isMatchOver = true;
 
-  document.getElementById(
-    'serve-info'
-  ).innerText =
+  document.getElementById('serve-info').innerText =
     `試合終了: ${message}`;
 
-  document.getElementById(
-    'serve-info'
-  ).style.color =
+  document.getElementById('serve-info').style.color =
     '#38bdf8';
 
 }
 
 
 /* =========================================================
-   サーバー
+   Server
 ========================================================= */
 
-function showSecondServerModal() {
+function showSecondServerModal(){
 
   const firstServer =
     serveOrder[0];
 
+  const isA =
+    firstServer.startsWith('A');
+
   const targetPair =
-    firstServer.startsWith('A')
+    isA
       ? ['B1','B2']
       : ['A1','A2'];
 
 
-  const select =
-    document.getElementById(
-      'second-server-select'
-    );
-
-
-  select.innerHTML = `
+  document.getElementById('second-server-select').innerHTML = `
 
     <option value="${targetPair[0]}">
-      ${players[targetPair[0]]}
+      ${escapeHtml(players[targetPair[0]])}
     </option>
 
     <option value="${targetPair[1]}">
-      ${players[targetPair[1]]}
+      ${escapeHtml(players[targetPair[1]])}
     </option>
 
   `;
 
 
-  document.getElementById(
-    'server-modal'
-  ).classList.remove('hidden');
+  document
+    .getElementById('server-modal')
+    .classList.remove('hidden');
 
 }
 
 
-function confirmSecondServer() {
-
-  /*
-   * Undoで2ゲーム目サーバー決定前に
-   * 戻れるようにする。
-   */
-
-  saveHistory();
-
+function confirmSecondServer(){
 
   const secondServer =
-    document.getElementById(
-      'second-server-select'
-    ).value;
+    document.getElementById('second-server-select').value;
 
 
   serveOrder[1] =
@@ -2541,9 +2154,9 @@ function confirmSecondServer() {
       : second.slice(0,1)+'1';
 
 
-  document.getElementById(
-    'server-modal'
-  ).classList.add('hidden');
+  document
+    .getElementById('server-modal')
+    .classList.add('hidden');
 
 
   currentServerIdx = 1;
@@ -2555,7 +2168,7 @@ function confirmSecondServer() {
 }
 
 
-function getCurrentServerKey() {
+function getCurrentServerKey(){
 
   return (
     serveOrder[currentServerIdx] ||
@@ -2566,51 +2179,45 @@ function getCurrentServerKey() {
 
 
 /* =========================================================
-   スコア表示
+   Display
 ========================================================= */
 
-function updateDisplay() {
+function updateDisplay(){
 
-  document.getElementById(
-    'game-score'
-  ).innerText =
-    `ゲームスコア: ` +
-    `${teamNames.A} ${games.A} - ` +
-    `${games.B} ${teamNames.B}`;
+  document.getElementById('game-score').innerText =
+    `ゲームスコア: ${teamNames.A} ${games.A} - ${games.B} ${teamNames.B}`;
 
 
-  document.getElementById(
-    'point-score'
-  ).innerText =
-    `${pointLabels[points.A] || points.A} - ` +
-    `${pointLabels[points.B] || points.B}`;
+  document.getElementById('point-score').innerText =
+    `${pointLabel(points.A)} - ${pointLabel(points.B)}`;
 
 
-  if (!isMatchOver) {
+  if(!isMatchOver){
 
-    const serverKey =
+    const server =
       getCurrentServerKey();
 
     const serverName =
-      players[serverKey] ||
-      '未定';
+      players[server] || '未定';
 
 
-    const serveState =
+    let state =
       isSecondServe
         ? '2nd Serve'
         : '1st Serve';
 
 
-    document.getElementById(
-      'serve-info'
-    ).innerText =
-      `サーバー: ${serverName} (${serveState})`;
+    if(pendingFirstFault){
+
+      state += '（1st Fault済）';
+
+    }
 
 
-    document.getElementById(
-      'serve-info'
-    ).style.color =
+    document.getElementById('serve-info').innerText =
+      `サーバー: ${serverName} (${state})`;
+
+    document.getElementById('serve-info').style.color =
       '#fde047';
 
   }
@@ -2618,128 +2225,113 @@ function updateDisplay() {
 }
 
 
+function pointLabel(p){
+
+  const labels =
+    ['0','15','30','40'];
+
+  return labels[p] || p;
+
+}
+
+
 /* =========================================================
-   ゲームログ
+   Log Table
 ========================================================= */
 
-function renderGameLogTable() {
+function renderGameLogTable(){
 
   const headerRow =
-    document.getElementById(
-      'log-header-row'
-    );
+    document.getElementById('log-header-row');
 
   const tbody =
-    document.getElementById(
-      'game-log-tbody'
-    );
+    document.getElementById('game-log-tbody');
 
 
-  let maxCols = 1;
+  let maxCols = 8;
 
 
-  gameLogs.forEach(
-    game => {
+  gameLogs.forEach(g=>{
 
-      maxCols =
-        Math.max(
-          maxCols,
-          game.A.length,
-          game.B.length
-        );
+    maxCols =
+      Math.max(
+        maxCols,
+        g.A.length,
+        g.B.length
+      );
 
-    }
-  );
+  });
 
 
-  let headerHtml =
+  let header =
     '<th class="col-game">ゲーム</th>' +
     '<th class="col-team">チーム</th>';
 
 
-  for (
-    let i=1;
-    i<=maxCols;
-    i++
-  ) {
+  for(let i=1;i<=maxCols;i++){
 
-    headerHtml +=
+    header +=
       `<th>${i}</th>`;
 
   }
 
 
   headerRow.innerHTML =
-    headerHtml;
+    header;
 
 
   let html = '';
 
 
-  gameLogs.forEach(
-    (game,index) => {
+  gameLogs.forEach((g,index)=>{
 
-      const gameNum =
-        index + 1;
-
-
-      html += '<tr>';
+    const gameNum =
+      index + 1;
 
 
-      html +=
-        `<td rowspan="2"
-             class="col-game"
-             style="vertical-align:middle;">
-           ${gameNum}
-         </td>`;
+    html += '<tr>';
+
+    html +=
+      `<td rowspan="2" class="col-game"
+       style="vertical-align:middle;">
+       ${gameNum}
+       </td>`;
 
 
-      html +=
-        `<td class="col-team">
-           ${teamNames.A}
-         </td>`;
+    html +=
+      `<td class="col-team">
+       ${escapeHtml(teamNames.A)}
+       </td>`;
 
 
-      for (
-        let i=0;
-        i<maxCols;
-        i++
-      ) {
-
-        html +=
-          `<td>${game.A[i] || ''}</td>`;
-
-      }
-
-
-      html += '</tr>';
-
-
-      html += '<tr>';
-
+    for(let i=0;i<maxCols;i++){
 
       html +=
-        `<td class="col-team">
-           ${teamNames.B}
-         </td>`;
-
-
-      for (
-        let i=0;
-        i<maxCols;
-        i++
-      ) {
-
-        html +=
-          `<td>${game.B[i] || ''}</td>`;
-
-      }
-
-
-      html += '</tr>';
+        `<td>${escapeHtml(g.A[i] || '')}</td>`;
 
     }
-  );
+
+    html += '</tr>';
+
+
+    html += '<tr>';
+
+    html +=
+      `<td class="col-team">
+       ${escapeHtml(teamNames.B)}
+       </td>`;
+
+
+    for(let i=0;i<maxCols;i++){
+
+      html +=
+        `<td>${escapeHtml(g.B[i] || '')}</td>`;
+
+    }
+
+    html += '</tr>';
+
+  });
 
 
   tbody.innerHTML =
@@ -2749,10 +2341,10 @@ function renderGameLogTable() {
 
 
 /* =========================================================
-   スタッツ
+   Stats
 ========================================================= */
 
-function getPairStat(pair,key) {
+function getPairStat(pair,key){
 
   return (
     stats[pair+'1'][key] +
@@ -2762,89 +2354,59 @@ function getPairStat(pair,key) {
 }
 
 
-function getServePct(inCount,total) {
+function getServePct(inCount,total){
 
-  if (total === 0)
+  if(total === 0)
     return '0%';
 
-  return (
-    Math.round(
-      (inCount / total) * 100
-    ) + '%'
-  );
+  return Math.round(
+    inCount / total * 100
+  ) + '%';
 
 }
 
 
-/* =========================================================
-   スタッツ描画
-========================================================= */
+function renderStats(){
 
-function renderStats() {
-
-  const headerRow =
-    document.getElementById(
-      'table-header-row'
-    );
+  const header =
+    document.getElementById('table-header-row');
 
   const tbody =
-    document.querySelector(
-      '#stats-table tbody'
-    );
+    document.querySelector('#stats-table tbody');
 
 
-  document.getElementById(
-    'stats-title'
-  ).innerText =
+  document.getElementById('stats-title').innerText =
     modeType !== 'simple'
-      ? 'スタッツ集計 (選手別・チーム別)'
-      : 'スタッツ集計 (チーム単位)';
+      ? 'スタッツ集計（選手別・チーム別）'
+      : 'スタッツ集計（チーム単位）';
 
 
-  const a1stIn =
-    getPairStat(
-      'A',
-      'serve1In'
-    );
+  const a1In =
+    getPairStat('A','serve1In');
 
-  const a1stTotal =
-    getPairStat(
-      'A',
-      'serve1Total'
-    );
+  const a1Total =
+    getPairStat('A','serve1Total');
 
-  const b1stIn =
-    getPairStat(
-      'B',
-      'serve1In'
-    );
+  const b1In =
+    getPairStat('B','serve1In');
 
-  const b1stTotal =
-    getPairStat(
-      'B',
-      'serve1Total'
-    );
+  const b1Total =
+    getPairStat('B','serve1Total');
 
 
-  /*
-   * 選手別モード
-   */
+  if(modeType !== 'simple'){
 
-  if (
-    modeType !== 'simple'
-  ) {
-
-    headerRow.innerHTML = `
+    header.innerHTML = `
 
       <th>項目</th>
 
-      <th>${teamNames.A}</th>
-      <th>${players.A1}</th>
-      <th>${players.A2}</th>
+      <th>${escapeHtml(teamNames.A)}</th>
+      <th>${escapeHtml(players.A1)}</th>
+      <th>${escapeHtml(players.A2)}</th>
 
-      <th>${teamNames.B}</th>
-      <th>${players.B1}</th>
-      <th>${players.B2}</th>
+      <th>${escapeHtml(teamNames.B)}</th>
+      <th>${escapeHtml(players.B1)}</th>
+      <th>${escapeHtml(players.B2)}</th>
 
     `;
 
@@ -2854,12 +2416,7 @@ function renderStats() {
       <tr>
         <td>1stサーブイン率</td>
 
-        <td>
-          ${getServePct(
-            a1stIn,
-            a1stTotal
-          )}
-        </td>
+        <td>${getServePct(a1In,a1Total)}</td>
 
         <td>
           ${getServePct(
@@ -2875,12 +2432,7 @@ function renderStats() {
           )}
         </td>
 
-        <td>
-          ${getServePct(
-            b1stIn,
-            b1stTotal
-          )}
-        </td>
+        <td>${getServePct(b1In,b1Total)}</td>
 
         <td>
           ${getServePct(
@@ -3003,18 +2555,15 @@ function renderStats() {
 
     `;
 
+  }else{
 
-  } else {
-
-    /*
-     * シンプルモード
-     */
-
-    headerRow.innerHTML = `
+    header.innerHTML = `
 
       <th>項目</th>
-      <th>${teamNames.A}</th>
-      <th>${teamNames.B}</th>
+
+      <th>${escapeHtml(teamNames.A)}</th>
+
+      <th>${escapeHtml(teamNames.B)}</th>
 
     `;
 
@@ -3023,82 +2572,54 @@ function renderStats() {
 
       <tr>
         <td>1stサーブイン率</td>
-
-        <td>
-          ${getServePct(
-            a1stIn,
-            a1stTotal
-          )}
-        </td>
-
-        <td>
-          ${getServePct(
-            b1stIn,
-            b1stTotal
-          )}
-        </td>
+        <td>${getServePct(a1In,a1Total)}</td>
+        <td>${getServePct(b1In,b1Total)}</td>
       </tr>
-
 
       <tr>
         <td>サービスエース</td>
-
         <td>${getPairStat('A','ace')}</td>
         <td>${getPairStat('B','ace')}</td>
       </tr>
 
-
       <tr>
         <td>ダブルフォルト</td>
-
         <td>${getPairStat('A','df')}</td>
         <td>${getPairStat('B','df')}</td>
       </tr>
 
-
       <tr>
         <td>ストロークウィナー</td>
-
         <td>${getPairStat('A','strokeW')}</td>
         <td>${getPairStat('B','strokeW')}</td>
       </tr>
 
-
       <tr>
         <td>ストロークエラー</td>
-
         <td>${getPairStat('A','strokeE')}</td>
         <td>${getPairStat('B','strokeE')}</td>
       </tr>
 
-
       <tr>
         <td>ボレーウィナー</td>
-
         <td>${getPairStat('A','volleyW')}</td>
         <td>${getPairStat('B','volleyW')}</td>
       </tr>
 
-
       <tr>
         <td>ボレーエラー</td>
-
         <td>${getPairStat('A','volleyE')}</td>
         <td>${getPairStat('B','volleyE')}</td>
       </tr>
 
-
       <tr>
         <td>リターンエース</td>
-
         <td>${getPairStat('A','returnW')}</td>
         <td>${getPairStat('B','returnW')}</td>
       </tr>
 
-
       <tr>
         <td>リターンエラー</td>
-
         <td>${getPairStat('A','returnE')}</td>
         <td>${getPairStat('B','returnE')}</td>
       </tr>
@@ -3109,8 +2630,246 @@ function renderStats() {
 
 }
 
+
+/* =========================================================
+   画像保存
+========================================================= */
+
+async function saveAsImage(){
+
+  if(typeof html2canvas === 'undefined'){
+
+    alert(
+      '画像保存機能の読み込みに失敗しました。' +
+      'インターネット接続を確認してください。'
+    );
+
+    return;
+
+  }
+
+
+  const area =
+    document.getElementById('export-area');
+
+
+  /*
+   * 現在の画面から
+   * 「綺麗な結果表」を専用DOMとして作る
+   */
+
+  let html = `
+
+    <div class="export-title">
+      テニス試合スタッツ
+    </div>
+
+    <div style="text-align:center;margin-bottom:5px;">
+      ${escapeHtml(matchDateStr)}
+    </div>
+
+    <div class="export-score">
+      ${escapeHtml(teamNames.A)}
+      ${games.A}
+      -
+      ${games.B}
+      ${escapeHtml(teamNames.B)}
+    </div>
+
+    <div style="text-align:center;margin-bottom:15px;">
+      ポイント
+      ${pointLabel(points.A)}
+      -
+      ${pointLabel(points.B)}
+    </div>
+
+    <div class="export-section-title">
+      ゲーム別ポイントログ
+    </div>
+
+  `;
+
+
+  /*
+   * ログテーブル
+   */
+
+  const logTable =
+    document.getElementById('game-log-table');
+
+
+  html +=
+    logTable.outerHTML;
+
+
+  /*
+   * スタッツ
+   */
+
+  html += `
+
+    <div class="export-section-title">
+      スタッツ集計
+    </div>
+
+  `;
+
+
+  const statsTable =
+    document.getElementById('stats-table');
+
+
+  html +=
+    statsTable.outerHTML;
+
+
+  area.innerHTML =
+    html;
+
+
+  /*
+   * sticky指定を画像用に解除
+   */
+
+  area
+    .querySelectorAll('*')
+    .forEach(el=>{
+
+      el.style.position = 'static';
+
+    });
+
+
+  try{
+
+    const canvas =
+      await html2canvas(
+        area,
+        {
+          scale:2,
+          backgroundColor:'#ffffff',
+          useCORS:true,
+          logging:false
+        }
+      );
+
+
+    canvas.toBlob(async blob=>{
+
+      if(!blob)
+        return;
+
+
+      const file =
+        new File(
+          [blob],
+          'tennis-stats.png',
+          {type:'image/png'}
+        );
+
+
+      /*
+       * スマホ対応:
+       * Web Share APIが使える場合は共有画面
+       */
+
+      if(
+        navigator.share &&
+        navigator.canShare &&
+        navigator.canShare({files:[file]})
+      ){
+
+        try{
+
+          await navigator.share({
+            title:'テニススタッツ',
+            text:'試合スタッツ',
+            files:[file]
+          });
+
+          return;
+
+        }catch(e){
+
+          /*
+           * キャンセル時は何もしない
+           */
+
+          if(e.name === 'AbortError')
+            return;
+
+        }
+
+      }
+
+
+      /*
+       * 共有非対応の場合は画像を新規タブで開く
+       */
+
+      const url =
+        URL.createObjectURL(blob);
+
+      const win =
+        window.open(url,'_blank');
+
+      if(!win){
+
+        /*
+         * ポップアップブロック対策
+         */
+
+        const a =
+          document.createElement('a');
+
+        a.href = url;
+        a.download = 'tennis-stats.png';
+
+        document.body.appendChild(a);
+
+        a.click();
+
+        a.remove();
+
+      }
+
+      setTimeout(
+        ()=>URL.revokeObjectURL(url),
+        60000
+      );
+
+    },'image/png');
+
+
+  }catch(e){
+
+    console.error(e);
+
+    alert(
+      '画像の生成に失敗しました。'
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   HTML Escape
+========================================================= */
+
+function escapeHtml(str){
+
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
+
+}
+
 </script>
 
 </body>
 </html>
-```
