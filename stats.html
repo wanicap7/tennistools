@@ -57,10 +57,18 @@ button{
   color:var(--text);
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  -webkit-user-select:none;
+  user-select:none;
+  transition:transform .045s ease, filter .045s ease, box-shadow .045s ease;
+  will-change:transform;
 }
 
-button:active{
-  transform:scale(.98);
+button:active,
+button.is-pressing{
+  transform:scale(.965);
+  filter:brightness(.94);
+  box-shadow:inset 0 1px 3px rgba(15,23,42,.18);
 }
 
 button.selected{
@@ -3532,6 +3540,36 @@ function clearSideSelection(){
     .classList.remove('selected');
 
 }
+
+
+
+/* =========================================================
+   モバイル向けタップフィードバック
+   - touch-action: manipulation と組み合わせてダブルタップ拡大を抑制
+   - pointerdown直後に押下状態を表示して体感レスポンスを向上
+========================================================= */
+(function setupFastButtonFeedback(){
+  const clearPress = (btn) => {
+    if(btn) btn.classList.remove('is-pressing');
+  };
+
+  document.addEventListener('pointerdown', (e) => {
+    const btn = e.target.closest('button:not(:disabled)');
+    if(!btn) return;
+    btn.classList.add('is-pressing');
+  }, {passive:true});
+
+  ['pointerup','pointercancel','pointerleave'].forEach(type => {
+    document.addEventListener(type, (e) => {
+      const btn = e.target.closest && e.target.closest('button');
+      clearPress(btn);
+    }, {passive:true});
+  });
+
+  window.addEventListener('blur', () => {
+    document.querySelectorAll('button.is-pressing').forEach(clearPress);
+  });
+})();
 
 </script>
 
