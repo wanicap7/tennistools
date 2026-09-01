@@ -1645,13 +1645,20 @@ function updateButtonStates(){
       リターンは常に押せる
     */
 
+    const selectedPlayerPair = selectedPlayer
+      ? (selectedPlayer.startsWith('A') ? 'A' : 'B')
+      : null;
+
+    const serverPair = server.startsWith('A') ? 'A' : 'B';
+    const isServerPairSelected = selectedPlayerPair === serverPair;
+
     document.getElementById(
       'btn-returnW'
-    ).disabled=false;
+    ).disabled=isServerPairSelected;
 
     document.getElementById(
       'btn-returnE'
-    ).disabled=false;
+    ).disabled=isServerPairSelected;
 
 
   }else{
@@ -1681,13 +1688,15 @@ function updateButtonStates(){
       !isServerSelected;
 
 
+    const isServerPairSelected = selectedPair === serverPair;
+
     document.getElementById(
       'btn-returnW'
-    ).disabled=false;
+    ).disabled=isServerPairSelected;
 
     document.getElementById(
       'btn-returnE'
-    ).disabled=false;
+    ).disabled=isServerPairSelected;
 
   }
 
