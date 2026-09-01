@@ -893,6 +893,9 @@ let selectedSide='';
 
 let isMatchOver=false;
 
+// セミアドで2回目のデュース後、次の1点が決定点か
+let semiAdDecidingPoint=false;
+
 let stats={};
 
 let gameLogs=[];
@@ -1091,6 +1094,8 @@ function makeSnapshot(){
 
     isMatchOver:isMatchOver,
 
+    semiAdDecidingPoint:semiAdDecidingPoint,
+
     stats:cloneState(stats),
 
     gameLogs:cloneState(gameLogs)
@@ -1133,6 +1138,8 @@ function restoreSnapshot(s){
   selectedSide=s.selectedSide;
 
   isMatchOver=s.isMatchOver;
+
+  semiAdDecidingPoint=!!s.semiAdDecidingPoint;
 
   stats=cloneState(s.stats);
 
@@ -1314,6 +1321,7 @@ function startGame(){
   gameLogs=[
     {
       server:serveOrder[0],
+      isTieBreak:false,
       A:[],
       B:[]
     }
@@ -1338,6 +1346,8 @@ function startGame(){
   selectedSide='';
 
   isMatchOver=false;
+
+  semiAdDecidingPoint=false;
 
   history=[];
 
@@ -2016,46 +2026,58 @@ function recordPoint(action){
 
 
   /* -------------------------
-     個人スタッツ
+     アクションスタッツ
+
+     シンプルモードは選手を特定しないため、
+     各ペアの1番側をチーム集計用の入れ物として利用する。
+     表示時はペア合算するのでチーム値は正しくなる。
   ------------------------- */
 
-  if(
-    modeType!=='simple' &&
-    selectedPlayer
-  ){
+  let statActor=null;
+
+  if(modeType==='simple'){
+    const actorPair = action==='ダブルフォルト'
+      ? (server.startsWith('A') ? 'A' : 'B')
+      : selectedPair;
+    if(actorPair) statActor=actorPair+'1';
+  }else if(selectedPlayer){
+    statActor=selectedPlayer;
+  }
+
+  if(statActor){
 
     if(action==='サービスエース')
-      stats[selectedPlayer].ace++;
+      stats[statActor].ace++;
 
     if(action==='ストロークウィナー'){
-      stats[selectedPlayer].strokeW++;
-      if(modeType==='detail' && selectedSide==='フォア') stats[selectedPlayer].foreStrokeW++;
-      if(modeType==='detail' && selectedSide==='バック') stats[selectedPlayer].backStrokeW++;
+      stats[statActor].strokeW++;
+      if(modeType==='detail' && selectedSide==='フォア') stats[statActor].foreStrokeW++;
+      if(modeType==='detail' && selectedSide==='バック') stats[statActor].backStrokeW++;
     }
 
     if(action==='ストロークエラー'){
-      stats[selectedPlayer].strokeE++;
-      if(modeType==='detail' && selectedSide==='フォア') stats[selectedPlayer].foreStrokeE++;
-      if(modeType==='detail' && selectedSide==='バック') stats[selectedPlayer].backStrokeE++;
+      stats[statActor].strokeE++;
+      if(modeType==='detail' && selectedSide==='フォア') stats[statActor].foreStrokeE++;
+      if(modeType==='detail' && selectedSide==='バック') stats[statActor].backStrokeE++;
     }
 
     if(action==='ボレーウィナー'){
-      stats[selectedPlayer].volleyW++;
-      if(modeType==='detail' && selectedSide==='フォア') stats[selectedPlayer].foreVolleyW++;
-      if(modeType==='detail' && selectedSide==='バック') stats[selectedPlayer].backVolleyW++;
+      stats[statActor].volleyW++;
+      if(modeType==='detail' && selectedSide==='フォア') stats[statActor].foreVolleyW++;
+      if(modeType==='detail' && selectedSide==='バック') stats[statActor].backVolleyW++;
     }
 
     if(action==='ボレーエラー'){
-      stats[selectedPlayer].volleyE++;
-      if(modeType==='detail' && selectedSide==='フォア') stats[selectedPlayer].foreVolleyE++;
-      if(modeType==='detail' && selectedSide==='バック') stats[selectedPlayer].backVolleyE++;
+      stats[statActor].volleyE++;
+      if(modeType==='detail' && selectedSide==='フォア') stats[statActor].foreVolleyE++;
+      if(modeType==='detail' && selectedSide==='バック') stats[statActor].backVolleyE++;
     }
 
     if(action==='リターンエース')
-      stats[selectedPlayer].returnW++;
+      stats[statActor].returnW++;
 
     if(action==='リターンエラー')
-      stats[selectedPlayer].returnE++;
+      stats[statActor].returnE++;
 
   }
 
@@ -2134,7 +2156,10 @@ function recordPoint(action){
 
   }else{
 
-    const actorPair= winnerPair;
+    // シンプルモードでは、ログに表示するのはポイント勝者ではなく
+    // 実際に選択した『そのショットを打ったペア』。
+    // （エラー時に勝者側の名前が出る不具合を防ぐ）
+    const actorPair= selectedPair || winnerPair;
 
     abbr+=
       `(${teamNames[actorPair]})`;
@@ -2383,7 +2408,24 @@ function getWinnerPair(action){
    ポイント → ゲーム
 ========================================================= */
 
+function isTieBreakActive(){
+  return rule==='1set' && games.A===6 && games.B===6;
+}
+
+function advanceTieBreakServerIfNeeded(){
+  const totalPoints=points.A+points.B;
+
+  // タイブレークは最初のサーバーが1ポイント、以降は2ポイントずつ交代。
+  // したがって1,3,5,7...ポイント終了時に次サーバーへ送る。
+  if(totalPoints===1 || (totalPoints>1 && totalPoints%2===1)){
+    currentServerIdx=(currentServerIdx+1)%4;
+  }
+}
+
 function addPoint(pair){
+
+  const tieBreak=isTieBreakActive();
+  const wasSemiAdDeciding=semiAdDecidingPoint;
 
   points[pair]++;
 
@@ -2395,43 +2437,52 @@ function addPoint(pair){
   let gameWon=false;
 
 
-  if(rule==='6noadd'){
+  if(tieBreak){
 
+    // 6-6から7ポイントタイブレーク。2点差が付くまで継続。
+    if(
+      points[pair]>=7 &&
+      points[pair]-points[other]>=2
+    ){
+      gameWon=true;
+    }
+
+  }else if(rule==='6noadd'){
+
+    // 40-40の次の1点でゲーム。
     if(
       points[pair]>=4 &&
       points[pair]!==points[other]
     ){
-
       gameWon=true;
-
     }
 
-  }
+  }else if(rule==='6semiadd'){
 
-
-  else if(rule==='6semiadd'){
-
-    if(
+    // 1回目のデュースは通常アドバンテージ。
+    // デュースへ戻ったら、その次の1点を決定点とする。
+    if(wasSemiAdDeciding){
+      gameWon=true;
+    }else if(
       points[pair]>=4 &&
-      points[pair]-points[other]>=1
+      points[pair]-points[other]>=2
     ){
-
       gameWon=true;
-
+    }else if(
+      points.A===points.B &&
+      points.A>=4
+    ){
+      semiAdDecidingPoint=true;
     }
 
-  }
+  }else if(rule==='1set'){
 
-
-  else if(rule==='1set'){
-
+    // 通常ゲームは何度でもデュースを繰り返す。
     if(
       points[pair]>=4 &&
       points[pair]-points[other]>=2
     ){
-
       gameWon=true;
-
     }
 
   }
@@ -2443,8 +2494,13 @@ function addPoint(pair){
 
     points.A=0;
     points.B=0;
+    semiAdDecidingPoint=false;
 
     onGameEnd();
+
+  }else if(tieBreak){
+
+    advanceTieBreakServerIfNeeded();
 
   }
 
@@ -2458,13 +2514,12 @@ function addPoint(pair){
 function onGameEnd(){
 
   /*
-    ノーアド
+    6ゲーム先取（ノーアド / セミアド）
   */
 
   if(
-    rule==='6noadd' &&
-    (games.A===6 || games.B===6) &&
-    games.A!==games.B
+    (rule==='6noadd' || rule==='6semiadd') &&
+    (games.A===6 || games.B===6)
   ){
 
     endMatch(
@@ -2479,41 +2534,46 @@ function onGameEnd(){
 
 
   /*
-    通常6ゲーム先取
+    1セットマッチ
+    ・6ゲーム以上かつ2ゲーム差で終了
+    ・6-6タイブレークを取った場合は7-6で終了
   */
 
-  if(
-    rule!=='6noadd' &&
-    (
-      (
-        games.A>=6 &&
-        games.A-games.B>=2
-      )
-      ||
-      (
-        games.B>=6 &&
-        games.B-games.A>=2
-      )
-    )
-  ){
+  if(rule==='1set'){
 
-    endMatch(
-      games.A>games.B
-        ? `${teamNames.A}の勝利！`
-        : `${teamNames.B}の勝利！`
-    );
+    const wonByTwoGames =
+      (games.A>=6 && games.A-games.B>=2) ||
+      (games.B>=6 && games.B-games.A>=2);
 
-    return;
+    const wonTieBreak =
+      (games.A===7 && games.B===6) ||
+      (games.B===7 && games.A===6);
+
+    if(wonByTwoGames || wonTieBreak){
+      endMatch(
+        games.A>games.B
+          ? `${teamNames.A}の勝利！`
+          : `${teamNames.B}の勝利！`
+      );
+      return;
+    }
 
   }
 
+
+  const nextIsTieBreak =
+    rule==='1set' &&
+    games.A===6 &&
+    games.B===6;
 
   /*
     次ゲームログ
+    ポイント数に上限は設けないため、デュースが続けばログ列もその分横へ伸びる。
   */
 
   gameLogs.push({
     server:null,
+    isTieBreak:nextIsTieBreak,
     A:[],
     B:[]
   });
@@ -2682,6 +2742,30 @@ function getCurrentServerKey(){
    表示
 ========================================================= */
 
+function getPointScoreText(){
+
+  if(isTieBreakActive()){
+    return `${points.A} - ${points.B} (TB)`;
+  }
+
+  if(rule==='6noadd'){
+    return `${pointLabels[points.A] || points.A} - ${pointLabels[points.B] || points.B}`;
+  }
+
+  // デュースありの表示をテニス表記にする。
+  if(points.A>=3 && points.B>=3){
+    if(points.A===points.B){
+      return semiAdDecidingPoint
+        ? '40 - 40 (決定点)'
+        : '40 - 40';
+    }
+    if(points.A===points.B+1) return 'Ad - 40';
+    if(points.B===points.A+1) return '40 - Ad';
+  }
+
+  return `${pointLabels[points.A] || points.A} - ${pointLabels[points.B] || points.B}`;
+}
+
 function updateDisplay(){
 
   document
@@ -2692,8 +2776,7 @@ function updateDisplay(){
 
   document
     .getElementById('point-score')
-    .innerText=
-      `${pointLabels[points.A] || points.A} - ${pointLabels[points.B] || points.B}`;
+    .innerText=getPointScoreText();
 
 
   if(!isMatchOver){
@@ -2799,9 +2882,9 @@ function renderGameLogTable(){
           class="col-game"
           style="vertical-align:middle">
 
-          ${gameNum}<br>
+          ${g.isTieBreak ? 'TB' : gameNum}<br>
           <span style="font-size:.72rem;font-weight:normal;white-space:normal;line-height:1.2">
-            S: ${players[g.server] || '未定'}
+            S: ${players[g.server] || '未定'}${g.isTieBreak ? ' → 2pt交代' : ''}
           </span>
 
         </td>
@@ -2933,6 +3016,18 @@ function renderStats(){
   const b1Total=
     getPairStat('B','serve1Total');
 
+  const a2In=
+    getPairStat('A','serve2In');
+
+  const a2Total=
+    getPairStat('A','serve2Total');
+
+  const b2In=
+    getPairStat('B','serve2In');
+
+  const b2Total=
+    getPairStat('B','serve2Total');
+
 
   if(modeType!=='simple'){
 
@@ -2996,6 +3091,20 @@ function renderStats(){
             stats.B2.serve1Total
           )}
         </td>
+
+      </tr>
+
+      <tr>
+
+        <td>2ndサーブイン率</td>
+
+        <td>${getServePct(a2In,a2Total)}</td>
+        <td>${getServePct(stats.A1.serve2In,stats.A1.serve2Total)}</td>
+        <td>${getServePct(stats.A2.serve2In,stats.A2.serve2Total)}</td>
+
+        <td>${getServePct(b2In,b2Total)}</td>
+        <td>${getServePct(stats.B1.serve2In,stats.B1.serve2Total)}</td>
+        <td>${getServePct(stats.B2.serve2In,stats.B2.serve2Total)}</td>
 
       </tr>
 
@@ -3192,6 +3301,16 @@ function renderStats(){
 
       </tr>
 
+      <tr>
+
+        <td>2ndサーブイン率</td>
+
+        <td>${getServePct(a2In,a2Total)}</td>
+
+        <td>${getServePct(b2In,b2Total)}</td>
+
+      </tr>
+
 
       <tr>
 
@@ -3364,7 +3483,7 @@ function buildGameLogMatrixForExport(){
   gameLogs.forEach((g,index)=>{
     const serverName=players[g.server] || '未定';
     matrix.push([
-      {text:`${index+1} / S:${serverName}`,colspan:1,rowspan:1},
+      {text:g.isTieBreak ? `TB / S:${serverName}→2pt` : `${index+1} / S:${serverName}`,colspan:1,rowspan:1},
       {text:teamNames.A,colspan:1,rowspan:1},
       ...Array.from({length:maxCols},(_,i)=>({text:g.A[i] || '',colspan:1,rowspan:1}))
     ]);
