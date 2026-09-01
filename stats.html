@@ -200,15 +200,15 @@ th{
   left:0;
   background:#f1f5f9;
   z-index:10;
-  width:45px;
-  min-width:45px;
+  width:100px;
+  min-width:100px;
   font-weight:bold;
 }
 
 .log-table th.col-team,
 .log-table td.col-team{
   position:sticky;
-  left:45px;
+  left:100px;
   background:#f1f5f9;
   z-index:10;
   width:90px;
@@ -1289,6 +1289,7 @@ function startGame(){
 
   gameLogs=[
     {
+      server:serveOrder[0],
       A:[],
       B:[]
     }
@@ -1859,10 +1860,10 @@ function recordDoubleFaultAfterSecondFault(){
   const index = current.A.length - 1;
 
 
-  let label = `DbF(${teamNames[serverPair]})`;
+  let label = `*DbF(${teamNames[serverPair]})`;
 
   if(modeType!=='simple' && selectedPlayer){
-    label = `DbF(${players[server]})`;
+    label = `*DbF(${players[server]})`;
   }
 
 
@@ -2111,8 +2112,9 @@ function recordPoint(action){
     */
 
     const index = current.A.length - 1;
-    current.A[index] = (winnerPair === 'A') ? abbr : '';
-    current.B[index] = (winnerPair === 'B') ? abbr : '';
+    const secondServeAbbr = `*${abbr}`;
+    current.A[index] = (winnerPair === 'A') ? secondServeAbbr : '';
+    current.B[index] = (winnerPair === 'B') ? secondServeAbbr : '';
 
   }else{
 
@@ -2468,6 +2470,7 @@ function onGameEnd(){
   */
 
   gameLogs.push({
+    server:null,
     A:[],
     B:[]
   });
@@ -2492,6 +2495,8 @@ function onGameEnd(){
 
     currentServerIdx=
       (currentServerIdx+1)%4;
+
+    gameLogs[gameLogs.length-1].server=getCurrentServerKey();
 
     setDefaultServerSelection();
 
@@ -2608,6 +2613,8 @@ function confirmSecondServer(){
 
 
   currentServerIdx=1;
+
+  gameLogs[gameLogs.length-1].server=secondServer;
 
   setDefaultServerSelection();
 
@@ -2749,7 +2756,10 @@ function renderGameLogTable(){
           class="col-game"
           style="vertical-align:middle">
 
-          ${gameNum}
+          ${gameNum}<br>
+          <span style="font-size:.72rem;font-weight:normal;white-space:normal;line-height:1.2">
+            S: ${players[g.server] || '未定'}
+          </span>
 
         </td>
 
@@ -3242,127 +3252,260 @@ function renderStats(){
 
 /* =========================================================
    スマホ向け画像出力
+   DOM→SVG変換はiOS Safariで失敗しやすいため、Canvasへ直接描画する。
 ========================================================= */
 
 async function exportResultImage(){
 
-  const root = document.getElementById('match-screen');
-  if(!root)return;
-
-  const target = document.createElement('div');
-  target.style.position='fixed';
-  target.style.left='-100000px';
-  target.style.top='0';
-  target.style.width='1100px';
-  target.style.background='#f8fafc';
-  target.style.padding='16px';
-  target.className='exporting';
-
-  const scoreboard = document.querySelector('.scoreboard');
-  const gameLogCard = document.getElementById('game-log-card');
-  const statsCard = document.getElementById('stats-card');
-
-  [scoreboard, gameLogCard, statsCard].forEach(el=>{
-    if(el){
-      const clone=el.cloneNode(true);
-      clone.querySelectorAll('.no-export,.no-print').forEach(x=>x.remove());
-      target.appendChild(clone);
-    }
-  });
-
-  document.body.appendChild(target);
-
   try{
-    const canvas = await elementToCanvas(target);
-    const blob = await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
-    if(!blob) throw new Error('PNG生成に失敗しました');
+    const canvas=buildResultCanvas();
+    const blob=await canvasToPngBlob(canvas);
 
-    const safeDate = matchDateStr || new Date().toISOString().slice(0,10);
-    const filename = `tennis_stats_${safeDate}.png`;
-    const file = new File([blob], filename, {type:'image/png'});
+    const safeDate=matchDateStr || new Date().toISOString().slice(0,10);
+    const filename=`tennis_stats_${safeDate}.png`;
+    const file=new File([blob],filename,{type:'image/png'});
 
-    if(navigator.canShare && navigator.canShare({files:[file]}) && navigator.share){
+    // 対応スマホでは共有シートを優先（「画像を保存」が使える）。
+    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
       try{
-        await navigator.share({
-          files:[file],
-          title:'テニススタッツ',
-          text:'テニススタッツ結果'
-        });
+        await navigator.share({files:[file],title:'テニススタッツ'});
         return;
       }catch(err){
-        if(err && err.name==='AbortError') return;
+        if(err && err.name==='AbortError')return;
+        console.warn('share failed; fallback to preview',err);
       }
     }
 
-    downloadBlob(blob, filename);
+    // 共有APIが使えない場合も必ず画像プレビューを出す。
+    // スマホは長押し保存、PCはダウンロード可能。
+    showImagePreview(blob,filename);
 
   }catch(err){
     console.error(err);
-    alert('画像保存に失敗しました。ブラウザを更新して再度お試しください。');
-  }finally{
-    target.remove();
+    alert(`画像生成に失敗しました: ${err && err.message ? err.message : err}`);
   }
 }
 
-function downloadBlob(blob, filename){
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download=filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),1500);
+function canvasToPngBlob(canvas){
+  return new Promise((resolve,reject)=>{
+    canvas.toBlob(blob=>{
+      if(blob)resolve(blob);
+      else reject(new Error('PNG Blobを生成できませんでした'));
+    },'image/png');
+  });
 }
 
-async function elementToCanvas(element){
-  const rect=element.getBoundingClientRect();
-  const width=Math.ceil(Math.max(element.scrollWidth, rect.width));
-  const height=Math.ceil(Math.max(element.scrollHeight, rect.height));
-  const scale=Math.min(window.devicePixelRatio || 1, 2);
+function getTableMatrix(table){
+  return [...table.rows].map(row=>
+    [...row.cells].map(cell=>({
+      text:(cell.innerText || '').replace(/\s+/g,' ').trim(),
+      colspan:cell.colSpan || 1,
+      rowspan:cell.rowSpan || 1
+    }))
+  );
+}
 
-  const cloned=element.cloneNode(true);
-  cloned.setAttribute('xmlns','http://www.w3.org/1999/xhtml');
+function buildGameLogMatrixForExport(){
+  let maxCols=8;
+  gameLogs.forEach(g=>{
+    maxCols=Math.max(maxCols,g.A.length,g.B.length);
+  });
 
-  const wrapper=document.createElement('div');
-  wrapper.appendChild(cloned);
+  const matrix=[];
+  matrix.push([
+    {text:'ゲーム',colspan:1,rowspan:1},
+    {text:'チーム',colspan:1,rowspan:1},
+    ...Array.from({length:maxCols},(_,i)=>({text:String(i+1),colspan:1,rowspan:1}))
+  ]);
 
-  const css=[...document.styleSheets].map(sheet=>{
-    try{
-      return [...sheet.cssRules].map(r=>r.cssText).join('\
-');
-    }catch(e){
-      return '';
-    }
-  }).join('\
-');
+  gameLogs.forEach((g,index)=>{
+    const serverName=players[g.server] || '未定';
+    matrix.push([
+      {text:`${index+1} / S:${serverName}`,colspan:1,rowspan:1},
+      {text:teamNames.A,colspan:1,rowspan:1},
+      ...Array.from({length:maxCols},(_,i)=>({text:g.A[i] || '',colspan:1,rowspan:1}))
+    ]);
+    matrix.push([
+      {text:'',colspan:1,rowspan:1},
+      {text:teamNames.B,colspan:1,rowspan:1},
+      ...Array.from({length:maxCols},(_,i)=>({text:g.B[i] || '',colspan:1,rowspan:1}))
+    ]);
+  });
 
-  const html=`<div xmlns="http://www.w3.org/1999/xhtml"><style>${css}</style>${wrapper.innerHTML}</div>`;
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><foreignObject width="100%" height="100%">${html}</foreignObject></svg>`;
+  return matrix;
+}
 
-  const svgBlob=new Blob([svg],{type:'image/svg+xml;charset=utf-8'});
-  const url=URL.createObjectURL(svgBlob);
+function buildResultCanvas(){
+  const statsTable=document.getElementById('stats-table');
+  if(!statsTable)throw new Error('出力対象の表が見つかりません');
 
-  try{
-    const img=await new Promise((resolve,reject)=>{
-      const image=new Image();
-      image.onload=()=>resolve(image);
-      image.onerror=reject;
-      image.src=url;
+  const log=buildGameLogMatrixForExport();
+  const statsMatrix=getTableMatrix(statsTable);
+
+  const fontFamily='-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif';
+  const baseFont=18;
+  const smallFont=16;
+  const rowH=46;
+  const pad=28;
+
+  const measureCanvas=document.createElement('canvas');
+  const mctx=measureCanvas.getContext('2d');
+  mctx.font=`${baseFont}px ${fontFamily}`;
+
+  const calcWidths=(matrix,kind)=>{
+    let cols=0;
+    matrix.forEach(r=>{ cols=Math.max(cols,r.reduce((n,c)=>n+c.colspan,0)); });
+    const widths=Array(cols).fill(kind==='log'?105:140);
+
+    matrix.forEach(r=>{
+      let ci=0;
+      r.forEach(c=>{
+        if(c.colspan===1){
+          const measured=Math.ceil(mctx.measureText(c.text).width)+24;
+          widths[ci]=Math.max(widths[ci],Math.min(measured,kind==='log'?(ci<2?180:155):220));
+        }
+        ci+=c.colspan;
+      });
     });
 
-    const canvas=document.createElement('canvas');
-    canvas.width=Math.ceil(width*scale);
-    canvas.height=Math.ceil(height*scale);
-    const ctx=canvas.getContext('2d');
-    ctx.scale(scale,scale);
-    ctx.fillStyle='#f8fafc';
-    ctx.fillRect(0,0,width,height);
-    ctx.drawImage(img,0,0,width,height);
-    return canvas;
-  }finally{
+    if(kind==='log'){
+      if(widths[0])widths[0]=Math.max(widths[0],120);
+      if(widths[1])widths[1]=Math.max(widths[1],140);
+    }
+    return widths;
+  };
+
+  const logWidths=calcWidths(log,'log');
+  const statWidths=calcWidths(statsMatrix,'stats');
+  const logW=logWidths.reduce((a,b)=>a+b,0);
+  const statW=statWidths.reduce((a,b)=>a+b,0);
+  const contentW=Math.max(logW,statW,900);
+
+  const scoreH=190;
+  const titleH=58;
+  const logH=log.length*rowH;
+  const statsH=statsMatrix.length*rowH;
+  const gap=30;
+  const contentH=pad+scoreH+gap+titleH+logH+gap+titleH+statsH+pad;
+
+  // 高解像度化しつつ、巨大Canvasによるスマホのメモリ不足を避ける。
+  const scale=Math.min(window.devicePixelRatio || 1,1.6);
+  const canvas=document.createElement('canvas');
+  canvas.width=Math.ceil((contentW+pad*2)*scale);
+  canvas.height=Math.ceil(contentH*scale);
+  const ctx=canvas.getContext('2d');
+  if(!ctx)throw new Error('Canvasを初期化できません');
+  ctx.scale(scale,scale);
+
+  const W=contentW+pad*2;
+  ctx.fillStyle='#f8fafc';
+  ctx.fillRect(0,0,W,contentH);
+
+  const drawText=(text,x,y,size=baseFont,bold=false,align='left',color='#1e293b')=>{
+    ctx.font=`${bold?'700':'400'} ${size}px ${fontFamily}`;
+    ctx.textAlign=align;
+    ctx.textBaseline='middle';
+    ctx.fillStyle=color;
+    ctx.fillText(text,x,y);
+  };
+
+  // スコアボード
+  let y=pad;
+  ctx.fillStyle='#0f172a';
+  roundRect(ctx,pad,y,contentW,scoreH,12);
+  ctx.fill();
+  drawText(matchDateStr || '',W/2,y+32,18,false,'center','#38bdf8');
+  drawText(document.getElementById('game-score').innerText,W/2,y+72,24,true,'center','#cbd5e1');
+  drawText(document.getElementById('point-score').innerText,W/2,y+116,42,true,'center','#38bdf8');
+  drawText(document.getElementById('serve-info').innerText,W/2,y+158,20,false,'center','#fde047');
+  y+=scoreH+gap;
+
+  drawText('ゲーム別ポイントログ',pad,y+titleH/2,24,true,'left');
+  y+=titleH;
+  drawCanvasTable(ctx,log,pad,y,logWidths,rowH,fontFamily,smallFont);
+  y+=logH+gap;
+
+  drawText(document.getElementById('stats-title').innerText,pad,y+titleH/2,24,true,'left');
+  y+=titleH;
+  drawCanvasTable(ctx,statsMatrix,pad,y,statWidths,rowH,fontFamily,smallFont);
+
+  return canvas;
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  const rr=Math.min(r,w/2,h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+rr,y);
+  ctx.arcTo(x+w,y,x+w,y+h,rr);
+  ctx.arcTo(x+w,y+h,x,y+h,rr);
+  ctx.arcTo(x,y+h,x,y,rr);
+  ctx.arcTo(x,y,x+w,y,rr);
+  ctx.closePath();
+}
+
+function drawCanvasTable(ctx,matrix,x,y,widths,rowH,fontFamily,fontSize){
+  const totalW=widths.reduce((a,b)=>a+b,0);
+  let cy=y;
+
+  matrix.forEach((row,ri)=>{
+    let cx=x;
+    let colIndex=0;
+
+    row.forEach(cell=>{
+      const cellW=widths.slice(colIndex,colIndex+cell.colspan).reduce((a,b)=>a+b,0);
+      const cellH=rowH*cell.rowspan;
+
+      ctx.fillStyle=ri===0 ? '#e2e8f0' : '#ffffff';
+      ctx.fillRect(cx,cy,cellW,cellH);
+      ctx.strokeStyle='#cbd5e1';
+      ctx.lineWidth=1;
+      ctx.strokeRect(cx+.5,cy+.5,cellW-1,cellH-1);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(cx+5,cy+3,cellW-10,cellH-6);
+      ctx.clip();
+      ctx.font=`${ri===0?'700':'400'} ${fontSize}px ${fontFamily}`;
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.fillStyle='#1e293b';
+      ctx.fillText(cell.text,cx+cellW/2,cy+cellH/2);
+      ctx.restore();
+
+      cx+=cellW;
+      colIndex+=cell.colspan;
+    });
+
+    cy+=rowH;
+  });
+
+  return totalW;
+}
+
+function showImagePreview(blob,filename){
+  const old=document.getElementById('image-preview-modal');
+  if(old)old.remove();
+
+  const url=URL.createObjectURL(blob);
+  const modal=document.createElement('div');
+  modal.id='image-preview-modal';
+  modal.className='modal';
+  modal.innerHTML=`
+    <div class="modal-content" style="max-width:720px;max-height:92vh;overflow:auto">
+      <h3>画像を保存</h3>
+      <p style="font-size:.85rem;color:#64748b;margin-top:0">スマホは画像を長押しして保存できます。</p>
+      <img src="${url}" alt="テニススタッツ画像" style="width:100%;height:auto;border:1px solid #e2e8f0;border-radius:6px;display:block">
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <a href="${url}" download="${filename}" style="flex:1;text-align:center;padding:12px;border-radius:6px;background:#2563eb;color:#fff;text-decoration:none;font-weight:bold">ダウンロード</a>
+        <button type="button" id="close-image-preview" style="flex:1">閉じる</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  document.getElementById('close-image-preview').onclick=()=>{
     URL.revokeObjectURL(url);
-  }
+    modal.remove();
+  };
 }
 
 /* =========================================================
