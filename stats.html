@@ -290,6 +290,46 @@ th{
   }
 }
 
+
+/* 画像出力用 */
+.export-actions{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+
+.exporting .no-export{
+  display:none!important;
+}
+
+.exporting .log-table-container,
+.exporting .stats-wrap{
+  overflow:visible!important;
+}
+
+.exporting .log-table,
+.exporting #stats-table{
+  min-width:0!important;
+  width:100%!important;
+}
+
+.exporting .log-table th.col-game,
+.exporting .log-table td.col-game,
+.exporting .log-table th.col-team,
+.exporting .log-table td.col-team{
+  position:static!important;
+}
+
+@media(max-width:600px){
+  .export-actions{
+    width:100%;
+  }
+  .export-actions button{
+    flex:1 1 0;
+    min-width:0;
+  }
+}
+
 @media print{
 
   body{
@@ -635,7 +675,7 @@ onclick="recordPoint('リターンエラー')">
      ログ
 ========================= -->
 
-<div class="card">
+<div class="card" id="game-log-card">
 
 <div style="
 display:flex;
@@ -649,13 +689,16 @@ margin-bottom:8px;
 ゲーム別ポイントログ
 </h3>
 
+<div class="export-actions no-print no-export">
 <button
-class="save-btn no-print"
-onclick="window.print()">
+class="save-btn"
+onclick="exportResultImage()">
 
-画像/PDF保存
+画像保存
 
 </button>
+
+</div>
 
 </div>
 
@@ -710,7 +753,7 @@ id="game-log-table">
      スタッツ
 ========================= -->
 
-<div class="card">
+<div class="card" id="stats-card">
 
 <h3 id="stats-title">
 スタッツ集計
@@ -1224,9 +1267,17 @@ function startGame(){
 
       strokeW:0,
       strokeE:0,
+      foreStrokeW:0,
+      foreStrokeE:0,
+      backStrokeW:0,
+      backStrokeE:0,
 
       volleyW:0,
       volleyE:0,
+      foreVolleyW:0,
+      foreVolleyE:0,
+      backVolleyW:0,
+      backVolleyE:0,
 
       returnW:0,
       returnE:0
@@ -1506,6 +1557,10 @@ function updateButtonStates(){
     'btn-fault',
     'btn-ace',
     'btn-df',
+    'btn-strokeW',
+    'btn-strokeE',
+    'btn-volleyW',
+    'btn-volleyE',
     'btn-returnW',
     'btn-returnE'
   ];
@@ -1535,6 +1590,14 @@ function updateButtonStates(){
 
     return;
 
+  }
+
+  // 詳細モードではストローク/ボレー記録にフォア/バック選択を必須化
+  if(modeType==='detail' && !selectedSide){
+    ['btn-strokeW','btn-strokeE','btn-volleyW','btn-volleyE'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.disabled=true;
+    });
   }
 
 
@@ -1651,6 +1714,8 @@ function selectSide(side){
       'selected',
       side==='バック'
     );
+
+  updateButtonStates();
 
 }
 
@@ -1918,17 +1983,29 @@ function recordPoint(action){
     if(action==='サービスエース')
       stats[selectedPlayer].ace++;
 
-    if(action==='ストロークウィナー')
+    if(action==='ストロークウィナー'){
       stats[selectedPlayer].strokeW++;
+      if(modeType==='detail' && selectedSide==='フォア') stats[selectedPlayer].foreStrokeW++;
+      if(modeType==='detail' && selectedSide==='バック') stats[selectedPlayer].backStrokeW++;
+    }
 
-    if(action==='ストロークエラー')
+    if(action==='ストロークエラー'){
       stats[selectedPlayer].strokeE++;
+      if(modeType==='detail' && selectedSide==='フォア') stats[selectedPlayer].foreStrokeE++;
+      if(modeType==='detail' && selectedSide==='バック') stats[selectedPlayer].backStrokeE++;
+    }
 
-    if(action==='ボレーウィナー')
+    if(action==='ボレーウィナー'){
       stats[selectedPlayer].volleyW++;
+      if(modeType==='detail' && selectedSide==='フォア') stats[selectedPlayer].foreVolleyW++;
+      if(modeType==='detail' && selectedSide==='バック') stats[selectedPlayer].backVolleyW++;
+    }
 
-    if(action==='ボレーエラー')
+    if(action==='ボレーエラー'){
       stats[selectedPlayer].volleyE++;
+      if(modeType==='detail' && selectedSide==='フォア') stats[selectedPlayer].foreVolleyE++;
+      if(modeType==='detail' && selectedSide==='バック') stats[selectedPlayer].backVolleyE++;
+    }
 
     if(action==='リターンエース')
       stats[selectedPlayer].returnW++;
@@ -2766,6 +2843,18 @@ function getServePct(inCount,total){
    スタッツ表示
 ========================================================= */
 
+function getErrorRate(errorCount,winnerCount){
+  const total=errorCount+winnerCount;
+  return total===0 ? '0%' : Math.round(errorCount/total*100)+'%';
+}
+
+function getPairErrorRate(pair,errorKey,winnerKey){
+  return getErrorRate(
+    getPairStat(pair,errorKey),
+    getPairStat(pair,winnerKey)
+  );
+}
+
 function renderStats(){
 
   const header=
@@ -2948,6 +3037,45 @@ function renderStats(){
       </tr>
 
 
+      ${modeType==='detail' ? `
+      <tr>
+        <td>フォア ストロークエラー率 (W+E中)</td>
+        <td>${getPairErrorRate('A','foreStrokeE','foreStrokeW')}</td>
+        <td>${getErrorRate(stats.A1.foreStrokeE,stats.A1.foreStrokeW)}</td>
+        <td>${getErrorRate(stats.A2.foreStrokeE,stats.A2.foreStrokeW)}</td>
+        <td>${getPairErrorRate('B','foreStrokeE','foreStrokeW')}</td>
+        <td>${getErrorRate(stats.B1.foreStrokeE,stats.B1.foreStrokeW)}</td>
+        <td>${getErrorRate(stats.B2.foreStrokeE,stats.B2.foreStrokeW)}</td>
+      </tr>
+      <tr>
+        <td>バック ストロークエラー率 (W+E中)</td>
+        <td>${getPairErrorRate('A','backStrokeE','backStrokeW')}</td>
+        <td>${getErrorRate(stats.A1.backStrokeE,stats.A1.backStrokeW)}</td>
+        <td>${getErrorRate(stats.A2.backStrokeE,stats.A2.backStrokeW)}</td>
+        <td>${getPairErrorRate('B','backStrokeE','backStrokeW')}</td>
+        <td>${getErrorRate(stats.B1.backStrokeE,stats.B1.backStrokeW)}</td>
+        <td>${getErrorRate(stats.B2.backStrokeE,stats.B2.backStrokeW)}</td>
+      </tr>
+      <tr>
+        <td>フォア ボレーエラー率 (W+E中)</td>
+        <td>${getPairErrorRate('A','foreVolleyE','foreVolleyW')}</td>
+        <td>${getErrorRate(stats.A1.foreVolleyE,stats.A1.foreVolleyW)}</td>
+        <td>${getErrorRate(stats.A2.foreVolleyE,stats.A2.foreVolleyW)}</td>
+        <td>${getPairErrorRate('B','foreVolleyE','foreVolleyW')}</td>
+        <td>${getErrorRate(stats.B1.foreVolleyE,stats.B1.foreVolleyW)}</td>
+        <td>${getErrorRate(stats.B2.foreVolleyE,stats.B2.foreVolleyW)}</td>
+      </tr>
+      <tr>
+        <td>バック ボレーエラー率 (W+E中)</td>
+        <td>${getPairErrorRate('A','backVolleyE','backVolleyW')}</td>
+        <td>${getErrorRate(stats.A1.backVolleyE,stats.A1.backVolleyW)}</td>
+        <td>${getErrorRate(stats.A2.backVolleyE,stats.A2.backVolleyW)}</td>
+        <td>${getPairErrorRate('B','backVolleyE','backVolleyW')}</td>
+        <td>${getErrorRate(stats.B1.backVolleyE,stats.B1.backVolleyW)}</td>
+        <td>${getErrorRate(stats.B2.backVolleyE,stats.B2.backVolleyW)}</td>
+      </tr>
+      ` : ''}
+
       <tr>
 
         <td>リターンエース</td>
@@ -3111,6 +3239,131 @@ function renderStats(){
 
 }
 
+
+/* =========================================================
+   スマホ向け画像出力
+========================================================= */
+
+async function exportResultImage(){
+
+  const root = document.getElementById('match-screen');
+  if(!root)return;
+
+  const target = document.createElement('div');
+  target.style.position='fixed';
+  target.style.left='-100000px';
+  target.style.top='0';
+  target.style.width='1100px';
+  target.style.background='#f8fafc';
+  target.style.padding='16px';
+  target.className='exporting';
+
+  const scoreboard = document.querySelector('.scoreboard');
+  const gameLogCard = document.getElementById('game-log-card');
+  const statsCard = document.getElementById('stats-card');
+
+  [scoreboard, gameLogCard, statsCard].forEach(el=>{
+    if(el){
+      const clone=el.cloneNode(true);
+      clone.querySelectorAll('.no-export,.no-print').forEach(x=>x.remove());
+      target.appendChild(clone);
+    }
+  });
+
+  document.body.appendChild(target);
+
+  try{
+    const canvas = await elementToCanvas(target);
+    const blob = await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+    if(!blob) throw new Error('PNG生成に失敗しました');
+
+    const safeDate = matchDateStr || new Date().toISOString().slice(0,10);
+    const filename = `tennis_stats_${safeDate}.png`;
+    const file = new File([blob], filename, {type:'image/png'});
+
+    if(navigator.canShare && navigator.canShare({files:[file]}) && navigator.share){
+      try{
+        await navigator.share({
+          files:[file],
+          title:'テニススタッツ',
+          text:'テニススタッツ結果'
+        });
+        return;
+      }catch(err){
+        if(err && err.name==='AbortError') return;
+      }
+    }
+
+    downloadBlob(blob, filename);
+
+  }catch(err){
+    console.error(err);
+    alert('画像保存に失敗しました。ブラウザを更新して再度お試しください。');
+  }finally{
+    target.remove();
+  }
+}
+
+function downloadBlob(blob, filename){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+
+async function elementToCanvas(element){
+  const rect=element.getBoundingClientRect();
+  const width=Math.ceil(Math.max(element.scrollWidth, rect.width));
+  const height=Math.ceil(Math.max(element.scrollHeight, rect.height));
+  const scale=Math.min(window.devicePixelRatio || 1, 2);
+
+  const cloned=element.cloneNode(true);
+  cloned.setAttribute('xmlns','http://www.w3.org/1999/xhtml');
+
+  const wrapper=document.createElement('div');
+  wrapper.appendChild(cloned);
+
+  const css=[...document.styleSheets].map(sheet=>{
+    try{
+      return [...sheet.cssRules].map(r=>r.cssText).join('\
+');
+    }catch(e){
+      return '';
+    }
+  }).join('\
+');
+
+  const html=`<div xmlns="http://www.w3.org/1999/xhtml"><style>${css}</style>${wrapper.innerHTML}</div>`;
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><foreignObject width="100%" height="100%">${html}</foreignObject></svg>`;
+
+  const svgBlob=new Blob([svg],{type:'image/svg+xml;charset=utf-8'});
+  const url=URL.createObjectURL(svgBlob);
+
+  try{
+    const img=await new Promise((resolve,reject)=>{
+      const image=new Image();
+      image.onload=()=>resolve(image);
+      image.onerror=reject;
+      image.src=url;
+    });
+
+    const canvas=document.createElement('canvas');
+    canvas.width=Math.ceil(width*scale);
+    canvas.height=Math.ceil(height*scale);
+    const ctx=canvas.getContext('2d');
+    ctx.scale(scale,scale);
+    ctx.fillStyle='#f8fafc';
+    ctx.fillRect(0,0,width,height);
+    ctx.drawImage(img,0,0,width,height);
+    return canvas;
+  }finally{
+    URL.revokeObjectURL(url);
+  }
+}
 
 /* =========================================================
    サイド選択解除
