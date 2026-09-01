@@ -275,6 +275,22 @@ th{
   border-color:var(--primary);
 }
 
+
+/* フォア/バック未選択でショットボタンを押した時の案内 */
+#detail-card.side-required{
+  animation:sideRequiredPulse .4s ease;
+}
+#detail-card.side-required #btn-fore,
+#detail-card.side-required #btn-back{
+  border-color:var(--primary);
+  box-shadow:0 0 0 3px rgba(37,99,235,.18);
+}
+@keyframes sideRequiredPulse{
+  0%,100%{transform:translateX(0)}
+  30%{transform:translateX(-3px)}
+  60%{transform:translateX(3px)}
+}
+
 @media(max-width:600px){
 
   body{
@@ -1601,13 +1617,8 @@ function updateButtonStates(){
 
   }
 
-  // 詳細モードではストローク/ボレー記録にフォア/バック選択を必須化
-  if(modeType==='detail' && !selectedSide){
-    ['btn-strokeW','btn-strokeE','btn-volleyW','btn-volleyE'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(el) el.disabled=true;
-    });
-  }
+  // 詳細モードでもストローク/ボレーボタンは常に操作可能にする。
+  // フォア/バック未選択時は recordPoint() 側で案内して記録を止める。
 
 
   /*
@@ -1925,6 +1936,21 @@ function recordDoubleFaultAfterSecondFault(){
 function recordPoint(action){
 
   if(isMatchOver)return;
+
+  // 詳細モードではストローク/ボレーのみフォア/バック選択が必須。
+  // ボタン自体は無効化せず、未選択なら分かりやすく案内して記録しない。
+  if(
+    modeType==='detail' &&
+    !selectedSide &&
+    ['ストロークウィナー','ストロークエラー','ボレーウィナー','ボレーエラー'].includes(action)
+  ){
+    const detailCard=document.getElementById('detail-card');
+    if(detailCard){
+      detailCard.classList.add('side-required');
+      setTimeout(()=>detailCard.classList.remove('side-required'),420);
+    }
+    return;
+  }
 
 
   /*
