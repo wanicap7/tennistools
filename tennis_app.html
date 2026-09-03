@@ -502,6 +502,8 @@
     let gameScore = { p1: 0, p2: 0 };
     let pointScore = { p1: 0, p2: 0 };
     let isTiebreak = false;
+    let semiAdDeciding = false; // セミアド: 2回目の40-40は次の1本でゲーム
+    let matchComplete = false;
 
     function formatScore(gScore, pScore, tiebreak) {
       const gText = `(${gScore.p1}-${gScore.p2})`;
@@ -520,7 +522,18 @@
         return `${pair1} ${s1} - ${s2} ${pair2} ${gText}`;
       }
 
-      if (rule === '6semi-ad' || rule === '1set') {
+      if (rule === '6semi-ad') {
+        if (p1 >= 3 && p2 >= 3) {
+          if (p1 === p2) {
+            const deuceLabel = semiAdDeciding ? '[一本]' : '(Deuce)';
+            return `${pair1} 40 - 40 ${pair2} ${deuceLabel} ${gText}`;
+          }
+          if (p1 > p2) return `${pair1} Ad - 40 ${pair2} ${gText}`;
+          if (p2 > p1) return `${pair1} 40 - Ad ${pair2} ${gText}`;
+        }
+      }
+
+      if (rule === '1set') {
         if (p1 >= 3 && p2 >= 3) {
           if (p1 === p2) return `${pair1} 40 - 40 ${pair2} (Deuce) ${gText}`;
           if (p1 > p2) return `${pair1} Ad - 40 ${pair2} ${gText}`;
@@ -534,45 +547,103 @@
     }
 
     function addPoint(winner) {
+      if (matchComplete) return;
+
       const loser = winner === 'p1' ? 'p2' : 'p1';
+
+      function winGame(player) {
+        gameScore[player]++;
+        pointScore = { p1: 0, p2: 0 };
+        semiAdDeciding = false;
+
+        if (rule === '1set') {
+          // 1セットマッチ:
+          // 6ゲーム以上かつ2ゲーム差で終了。6-6なら7ポイントTB。
+          if (gameScore[player] >= 6 &&
+              (gameScore[player] - gameScore[player === 'p1' ? 'p2' : 'p1']) >= 2) {
+            matchComplete = true;
+            isTiebreak = false;
+          } else if (gameScore.p1 === 6 && gameScore.p2 === 6) {
+            isTiebreak = true;
+          }
+        } else {
+          // 「6先」は6ゲーム先取で終了。
+          if (gameScore[player] >= 6) {
+            matchComplete = true;
+            isTiebreak = false;
+          }
+        }
+      }
 
       if (isTiebreak) {
         pointScore[winner]++;
-        if (pointScore[winner] >= 7 && (pointScore[winner] - pointScore[loser] >= 2)) {
+        if (pointScore[winner] >= 7 &&
+            (pointScore[winner] - pointScore[loser] >= 2)) {
           gameScore[winner]++;
           pointScore = { p1: 0, p2: 0 };
           isTiebreak = false;
+          matchComplete = true;
         }
         return;
       }
 
       if (rule === '6no-ad') {
+        // 40-40を含め、40を持っている側が次の1本を取ればゲーム。
         if (pointScore[winner] === 3) {
-          gameScore[winner]++;
-          pointScore = { p1: 0, p2: 0 };
+          winGame(winner);
         } else {
           pointScore[winner]++;
         }
-      } else if (rule === '6semi-ad' || rule === '1set') {
+        return;
+      }
+
+      if (rule === '6semi-ad') {
+        // セミアド:
+        // 1回目の40-40 → アドバンテージあり
+        // アドを取り返されて2回目の40-40 → 次の1本でゲーム
+        if (pointScore.p1 === 3 && pointScore.p2 === 3) {
+          if (semiAdDeciding) {
+            winGame(winner);
+          } else {
+            pointScore[winner]++;
+          }
+          return;
+        }
+
         if (pointScore[winner] >= 3 && pointScore[loser] >= 3) {
           if (pointScore[winner] > pointScore[loser]) {
-            gameScore[winner]++;
-            pointScore = { p1: 0, p2: 0 };
+            winGame(winner);
+          } else {
+            // 相手のアドバンテージを取り返した → 2回目のデュース（一本）
+            pointScore = { p1: 3, p2: 3 };
+            semiAdDeciding = true;
+          }
+          return;
+        }
+
+        if (pointScore[winner] === 3) {
+          winGame(winner);
+        } else {
+          pointScore[winner]++;
+        }
+        return;
+      }
+
+      if (rule === '1set') {
+        // 通常のアドバンテージ方式。デュース回数は無制限。
+        if (pointScore[winner] >= 3 && pointScore[loser] >= 3) {
+          if (pointScore[winner] > pointScore[loser]) {
+            winGame(winner);
           } else if (pointScore[winner] === pointScore[loser]) {
             pointScore[winner]++;
           } else {
             pointScore[loser]--;
           }
         } else if (pointScore[winner] === 3) {
-          gameScore[winner]++;
-          pointScore = { p1: 0, p2: 0 };
+          winGame(winner);
         } else {
           pointScore[winner]++;
         }
-      }
-
-      if (gameScore.p1 === 6 && gameScore.p2 === 6) {
-        isTiebreak = true;
       }
     }
 
