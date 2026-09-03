@@ -403,6 +403,13 @@
         📁 動画選択
         <input type="file" id="videoFile" accept="video/mp4,video/*">
       </div>
+      <button type="button" onclick="saveProjectJson()" style="background:#334155;color:#fff;border:1px solid #475569;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:600;">
+        💾 編集データ保存
+      </button>
+      <div class="file-select-btn">
+        📂 編集データ読込
+        <input type="file" id="projectFile" accept=".json,application/json">
+      </div>
     </div>
   </header>
 
@@ -421,6 +428,7 @@
       <span><span class="key-badge">O</span> OUT</span>
       <span><span class="key-badge">1</span>/<span class="key-badge">2</span> 得点</span>
       <span><span class="key-badge">U</span> 直前のINへ戻る</span>
+      <span><span class="key-badge">Ctrl</span>+<span class="key-badge">Z</span> 直前の得点取消</span>
       <span><span class="key-badge">[</span> <span class="key-badge">]</span> 速度</span>
     </div>
   </div>
@@ -698,6 +706,111 @@
     recalculateAllScores();
   }
 
+  function undoLastPoint() {
+    if (clipsData.length === 0) {
+      showToast('取り消せる得点がありません');
+      return;
+    }
+
+    const lastClip = clipsData.pop();
+    activeInTime = null;
+    pendingOutTime = null;
+
+    const player = document.getElementById('videoPlayer');
+    if (lastClip && lastClip.in !== undefined) {
+      player.currentTime = parseFloat(lastClip.in);
+      player.pause();
+    }
+
+    recalculateAllScores();
+    showToast(`↩ 直前の得点を取り消しました（クリップ #${clipsData.length + 1}）`);
+  }
+
+  function saveProjectJson() {
+    const project = {
+      version: 1,
+      savedAt: new Date().toISOString(),
+      videoFileName: videoFileName,
+      pair1: pair1,
+      pair2: pair2,
+      rule: document.getElementById('ruleSelect').value,
+      clipsData: clipsData
+    };
+
+    const json = JSON.stringify(project, null, 2);
+    const blob = new Blob([json], { type: 'application/json;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+
+    const baseName = (videoFileName || 'tennis_project').replace(/\.[^/.]+$/, '');
+    a.download = `${baseName}_edit.json`;
+
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showToast('💾 編集データを保存しました');
+  }
+
+  document.getElementById('projectFile').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        const project = JSON.parse(ev.target.result);
+
+        if (!project || !Array.isArray(project.clipsData)) {
+          throw new Error('clipsData がありません');
+        }
+
+        clipsData = project.clipsData.map(clip => ({
+          in: String(clip.in),
+          out: String(clip.out),
+          winner: clip.winner,
+          scoreBefore: clip.scoreBefore || '',
+          scoreAfter: clip.scoreAfter || ''
+        }));
+
+        if (project.videoFileName) videoFileName = project.videoFileName;
+
+        if (project.pair1) {
+          pair1 = project.pair1;
+          document.getElementById('pair1Input').value = pair1;
+        }
+        if (project.pair2) {
+          pair2 = project.pair2;
+          document.getElementById('pair2Input').value = pair2;
+        }
+
+        if (project.rule && [...document.getElementById('ruleSelect').options].some(o => o.value === project.rule)) {
+          document.getElementById('ruleSelect').value = project.rule;
+        }
+
+        activeInTime = null;
+        pendingOutTime = null;
+        recalculateAllScores();
+
+        showToast(`📂 編集データを読み込みました（${clipsData.length}クリップ）`);
+
+        // ブラウザではセキュリティ上、保存済みJSONから元動画を自動再選択できないため案内。
+        if (!document.getElementById('videoPlayer').src) {
+          setTimeout(() => {
+            alert(`編集データを読み込みました。\n元動画「${videoFileName}」を「動画選択」から指定してください。`);
+          }, 100);
+        }
+      } catch (err) {
+        alert(`編集データの読み込みに失敗しました。\n${err.message}`);
+      } finally {
+        e.target.value = '';
+      }
+    };
+    reader.readAsText(file, 'utf-8');
+  });
+
   function resetScore() {
     if (confirm("全ての記録済みクリップを削除してリセットしますか？")) {
       clipsData = [];
@@ -760,10 +873,17 @@
   // ★ キーボードショートカット (フォーカス解除を追加して誤作動防止)
   window.addEventListener('keydown', function(e) {
     const player = document.getElementById('videoPlayer');
-    if (!player.src) return;
 
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
     if (e.repeat) return;
+
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+      e.preventDefault();
+      undoLastPoint();
+      return;
+    }
+
+    if (!player.src) return;
 
     const modalActive = document.getElementById('winnerModal').classList.contains('active');
 
@@ -801,11 +921,16 @@
         break;
       case 'arrowleft':
         e.preventDefault();
-        player.currentTime = Math.max(0, player.currentTime - 5);
+        // 再生速度に関係なく、動画タイムライン上で正確に5秒戻す
+        player.currentTime = Math.max(0, Number(player.currentTime) - 5.0);
         break;
       case 'arrowright':
         e.preventDefault();
-        player.currentTime = Math.min(player.duration, player.currentTime + 5);
+        // 再生速度に関係なく、動画タイムライン上で正確に5秒進める
+        {
+          const duration = Number.isFinite(player.duration) ? player.duration : Infinity;
+          player.currentTime = Math.min(duration, Number(player.currentTime) + 5.0);
+        }
         break;
       case 'i':
         e.preventDefault();
