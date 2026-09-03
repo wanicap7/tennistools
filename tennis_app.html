@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tennis Rally Logger & Digest Generator</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --accent-color: #38bdf8;
+      --accent-green: #22c55e;
+      --accent-red: #ef4444;
+      --accent-yellow: #f59e0b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 1800px; /* ワイドモニターに対応 */
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 380px; /* 左側は伸縮、右側は380px固定 */
+      gap: 20px;
+    }
+
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #334155;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+      background: linear-gradient(to right, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-settings {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .setting-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+    }
+
+    input[type="text"], select {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .file-select-btn {
+      position: relative;
+      background: #334155;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-block;
+    }
+
+    .file-select-btn input[type="file"] {
+      position: absolute;
+      left: 0; top: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer;
+    }
+
+    /* Player Area (伸縮対応) */
+    .player-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 15px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .video-wrapper {
+      position: relative;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      aspect-ratio: 16 / 9;
+      width: 100%;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+    }
+
+    /* Scoreboard Overlay Preview */
+    .score-overlay {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 16px;
+      font-weight: bold;
+      color: #fff;
+      pointer-events: none;
+    }
+
+    .speed-overlay {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 14px;
+      font-weight: bold;
+      color: var(--accent-color);
+      pointer-events: none;
+    }
+
+    /* Controller / Shortcut Guide */
+    .shortcuts-bar {
+      display: flex;
+      gap: 12px;
+      margin-top: 15px;
+      background: #0f172a;
+      padding: 10px;
+      border-radius: 8px;
+      justify-content: space-around;
+      font-size: 12px;
+      flex-wrap: wrap;
+    }
+
+    .key-badge {
+      background: #334155;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-weight: bold;
+      color: var(--accent-color);
+      border: 1px solid #475569;
+    }
+
+    /* Score Board Control */
+    .score-control-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .score-display {
+      background: #0f172a;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+      border: 1px solid #334155;
+    }
+
+    .score-title {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 5px;
+    }
+
+    .score-val {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--accent-color);
+      font-family: monospace;
+    }
+
+    /* Rally List */
+    .clip-list-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 15px;
+      max-height: 380px;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+
+    .clip-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0f172a;
+      padding: 10px 12px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      border-left: 4px solid var(--accent-color);
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .clip-item:hover {
+      background: #1a2536;
+    }
+
+    .clip-item.active-in {
+      border-left-color: var(--accent-yellow);
+      background: #282115;
+      animation: pulse 1.5s infinite alternate;
+    }
+
+    @keyframes pulse {
+      0% { background: #282115; }
+      100% { background: #3c3018; }
+    }
+
+    .clip-info {
+      font-size: 13px;
+      flex-grow: 1;
+    }
+
+    .clip-time {
+      color: var(--text-muted);
+      font-size: 11px;
+      font-family: monospace;
+    }
+
+    .winner-toggle-btn {
+      background: #334155;
+      border: 1px solid #475569;
+      color: var(--accent-color);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      margin-top: 4px;
+      cursor: pointer;
+      display: inline-block;
+    }
+
+    .winner-toggle-btn:hover {
+      background: #475569;
+    }
+
+    .btn-del {
+      background: transparent;
+      border: none;
+      color: var(--accent-red);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 4px 8px;
+      margin-left: 8px;
+    }
+
+    .btn-del:hover {
+      background: rgba(239, 68, 68, 0.2);
+      border-radius: 4px;
+    }
+
+    /* Export Button */
+    .btn-export {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: white;
+      border: none;
+      padding: 16px;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+      transition: transform 0.1s, box-shadow 0.2s;
+    }
+
+    .btn-export:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+    }
+
+    /* Winner Selection Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(5px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: var(--card-bg);
+      border: 1px solid #334155;
+      padding: 25px;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 440px;
+      text-align: center;
+      box-shadow: 0 20px 30px rgba(0,0,0,0.5);
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    .modal-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .btn-winner {
+      background: #334155;
+      color: #fff;
+      border: 2px solid transparent;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .btn-winner:hover {
+      border-color: var(--accent-color);
+      background: #1e293b;
+      color: var(--accent-color);
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  <header>
+    <h1>🎾 テニスダイジェスト Studio</h1>
+    
+    <div class="header-settings">
+      <div class="setting-group">
+        <label>ペア1:</label>
+        <input type="text" id="pair1Input" value="●●ペア" onchange="updatePairNames()" style="width: 100px;">
+      </div>
+      <div class="setting-group">
+        <label>VS</label>
+      </div>
+      <div class="setting-group">
+        <label>ペア2:</label>
+        <input type="text" id="pair2Input" value="△△ペア" onchange="updatePairNames()" style="width: 100px;">
+      </div>
+      <div class="setting-group">
+        <label>ルール:</label>
+        <select id="ruleSelect" onchange="recalculateAllScores()">
+          <option value="6no-ad">6先 ノーアド</option>
+          <option value="6semi-ad">6先 セミアド</option>
+          <option value="1set">1セットマッチ (アド有)</option>
+        </select>
+      </div>
+      <div class="file-select-btn">
+        📁 動画選択
+        <input type="file" id="videoFile" accept="video/mp4,video/*">
+      </div>
+    </div>
+  </header>
+
+  <!-- Left Column: Video Player -->
+  <div class="player-card">
+    <div class="video-wrapper">
+      <video id="videoPlayer" controls></video>
+      <div id="scorePreview" class="score-overlay">0-0 (0-0)</div>
+      <div id="speedPreview" class="speed-overlay">1.0x</div>
+    </div>
+    
+    <div class="shortcuts-bar">
+      <span><span class="key-badge">Space</span> 再生/停止</span>
+      <span><span class="key-badge">←</span> <span class="key-badge">→</span> 5s移動</span>
+      <span><span class="key-badge">I</span> IN</span>
+      <span><span class="key-badge">O</span> OUT</span>
+      <span><span class="key-badge">1</span>/<span class="key-badge">2</span> 得点</span>
+      <span><span class="key-badge">U</span> 直前のINへ戻る</span>
+      <span><span class="key-badge">[</span> <span class="key-badge">]</span> 速度</span>
+    </div>
+  </div>
+
+  <!-- Right Column: Control & List -->
+  <div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Score Display -->
+    <div class="score-control-card">
+      <div class="score-display">
+        <div class="score-title">現在のスコア表記</div>
+        <div id="currentScoreText" class="score-val">0-0 (0-0)</div>
+      </div>
+      <button onclick="resetScore()" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:12px; text-decoration:underline;">全記録を消去してリセット</button>
+    </div>
+
+    <!-- Rally Clip History -->
+    <div class="clip-list-card" id="clipListContainer">
+      <div class="score-title" style="margin-bottom:10px;">記録済みクリップ (<span id="clipCount">0</span>) ※クリックでそのINへジャンプ</div>
+      <div id="clipList"></div>
+    </div>
+  </div>
+
+  <!-- Full Width Export Button -->
+  <button class="btn-export" onclick="generatePythonScript()">🚀 render_digest.py をダウンロードして書き出す</button>
+</div>
+
+<!-- Winner Selection Modal -->
+<div id="winnerModal" class="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-title">ラリー終了！ポイントを取得したのは？</div>
+    <div class="clip-time" id="modalTimeInfo">IN: 0.00s ➔ OUT: 0.00s</div>
+    <div class="modal-btns">
+      <button class="btn-winner" onclick="resolveRally('p1')">
+        <span>🎾 <span id="modalP1Name">ペア1</span></span>
+        <span class="key-badge">1</span>
+      </button>
+      <button class="btn-winner" onclick="resolveRally('p2')">
+        <span>🎾 <span id="modalP2Name">ペア2</span></span>
+        <span class="key-badge">2</span>
+      </button>
+    </div>
+    <div style="margin-top: 15px;">
+      <button onclick="cancelModalAndSeekToIn()" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:12px; text-decoration:underline;">
+        ↩ IN位置に戻ってやり直す (<span class="key-badge" style="font-size:10px;">U</span> or <span class="key-badge" style="font-size:10px;">Esc</span>)
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let videoFileName = "DJI_0001.MP4";
+  let activeInTime = null;
+  let pendingOutTime = null;
+  
+  let clipsData = [];
+
+  let pair1 = "●●ペア";
+  let pair2 = "△△ペア";
+
+  const pointNames = ["0", "15", "30", "40"];
+
+  // File Loader
+  document.getElementById('videoFile').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    videoFileName = file.name;
+    document.getElementById('videoPlayer').src = URL.createObjectURL(file);
+    e.target.blur();
+  });
+
+  function updatePairNames() {
+    pair1 = document.getElementById('pair1Input').value || "ペア1";
+    pair2 = document.getElementById('pair2Input').value || "ペア2";
+    recalculateAllScores();
+  }
+
+  function recalculateAllScores() {
+    const rule = document.getElementById('ruleSelect').value;
+    let gameScore = { p1: 0, p2: 0 };
+    let pointScore = { p1: 0, p2: 0 };
+    let isTiebreak = false;
+
+    function formatScore(gScore, pScore, tiebreak) {
+      const gText = `(${gScore.p1}-${gScore.p2})`;
+
+      if (tiebreak) {
+        return `${pair1} ${pScore.p1} - ${pScore.p2} ${pair2} ${gText}`;
+      }
+
+      const p1 = pScore.p1;
+      const p2 = pScore.p2;
+
+      if (rule === '6no-ad') {
+        if (p1 === 3 && p2 === 3) return `${pair1} 40 - 40 ${pair2} [一本] ${gText}`;
+        const s1 = pointNames[p1] || "40";
+        const s2 = pointNames[p2] || "40";
+        return `${pair1} ${s1} - ${s2} ${pair2} ${gText}`;
+      }
+
+      if (rule === '6semi-ad' || rule === '1set') {
+        if (p1 >= 3 && p2 >= 3) {
+          if (p1 === p2) return `${pair1} 40 - 40 ${pair2} (Deuce) ${gText}`;
+          if (p1 > p2) return `${pair1} Ad - 40 ${pair2} ${gText}`;
+          if (p2 > p1) return `${pair1} 40 - Ad ${pair2} ${gText}`;
+        }
+      }
+
+      const s1 = pointNames[p1] || "40";
+      const s2 = pointNames[p2] || "40";
+      return `${pair1} ${s1} - ${s2} ${pair2} ${gText}`;
+    }
+
+    function addPoint(winner) {
+      const loser = winner === 'p1' ? 'p2' : 'p1';
+
+      if (isTiebreak) {
+        pointScore[winner]++;
+        if (pointScore[winner] >= 7 && (pointScore[winner] - pointScore[loser] >= 2)) {
+          gameScore[winner]++;
+          pointScore = { p1: 0, p2: 0 };
+          isTiebreak = false;
+        }
+        return;
+      }
+
+      if (rule === '6no-ad') {
+        if (pointScore[winner] === 3) {
+          gameScore[winner]++;
+          pointScore = { p1: 0, p2: 0 };
+        } else {
+          pointScore[winner]++;
+        }
+      } else if (rule === '6semi-ad' || rule === '1set') {
+        if (pointScore[winner] >= 3 && pointScore[loser] >= 3) {
+          if (pointScore[winner] > pointScore[loser]) {
+            gameScore[winner]++;
+            pointScore = { p1: 0, p2: 0 };
+          } else if (pointScore[winner] === pointScore[loser]) {
+            pointScore[winner]++;
+          } else {
+            pointScore[loser]--;
+          }
+        } else if (pointScore[winner] === 3) {
+          gameScore[winner]++;
+          pointScore = { p1: 0, p2: 0 };
+        } else {
+          pointScore[winner]++;
+        }
+      }
+
+      if (gameScore.p1 === 6 && gameScore.p2 === 6) {
+        isTiebreak = true;
+      }
+    }
+
+    for (let i = 0; i < clipsData.length; i++) {
+      clipsData[i].scoreBefore = formatScore(gameScore, pointScore, isTiebreak);
+      addPoint(clipsData[i].winner);
+      clipsData[i].scoreAfter = formatScore(gameScore, pointScore, isTiebreak);
+    }
+
+    const currentScore = formatScore(gameScore, pointScore, isTiebreak);
+    document.getElementById('currentScoreText').innerText = currentScore;
+    document.getElementById('scorePreview').innerText = currentScore;
+
+    renderClipList();
+  }
+
+  function jumpToClipIn(index) {
+    const player = document.getElementById('videoPlayer');
+    const targetIn = parseFloat(clipsData[index].in);
+    player.currentTime = targetIn;
+    showToast(`▶ クリップ #${index + 1} のIN (${targetIn}s) へ移動`);
+    player.play();
+  }
+
+  // ★ 打込み中 (INのみ指定状態) の時間へのワープ処理
+  function jumpToActiveIn() {
+    if (activeInTime === null) return;
+    const player = document.getElementById('videoPlayer');
+    const targetIn = parseFloat(activeInTime);
+    player.currentTime = targetIn;
+    showToast(`▶ 打込み中のIN (${targetIn}s) へ移動`);
+    player.play();
+  }
+
+  // ★ 打込み中のINキャンセル処理
+  function cancelActiveIn(event) {
+    if (event) event.stopPropagation();
+    activeInTime = null;
+    showToast(`✕ 打込みをキャンセルしました`);
+    renderClipList();
+  }
+
+  function toggleClipWinner(index, event) {
+    event.stopPropagation();
+    const currentWinner = clipsData[index].winner;
+    const newWinner = currentWinner === 'p1' ? 'p2' : 'p1';
+    clipsData[index].winner = newWinner;
+
+    const newWinnerName = newWinner === 'p1' ? pair1 : pair2;
+    showToast(`🔄 クリップ #${index + 1} を ${newWinnerName} 得点に変更しました`);
+
+    recalculateAllScores();
+  }
+
+  function resetScore() {
+    if (confirm("全ての記録済みクリップを削除してリセットしますか？")) {
+      clipsData = [];
+      activeInTime = null;
+      recalculateAllScores();
+    }
+  }
+
+  function adjustSpeed(delta) {
+    const player = document.getElementById('videoPlayer');
+    let currentSpeed = player.playbackRate;
+    let newSpeed = Math.min(2.5, Math.max(0.5, currentSpeed + delta));
+    player.playbackRate = parseFloat(newSpeed.toFixed(2));
+    document.getElementById('speedPreview').innerText = `${player.playbackRate.toFixed(2)}x`;
+  }
+
+  function resetSpeed() {
+    const player = document.getElementById('videoPlayer');
+    player.playbackRate = 1.0;
+    document.getElementById('speedPreview').innerText = `1.0x`;
+  }
+
+  function cancelModalAndSeekToIn() {
+    const player = document.getElementById('videoPlayer');
+    document.getElementById('winnerModal').classList.remove('active');
+    
+    if (activeInTime !== null) {
+      player.currentTime = parseFloat(activeInTime);
+      showToast(`↩ IN (${activeInTime}s) へ戻りました`);
+      activeInTime = null;
+    }
+    pendingOutTime = null;
+    renderClipList();
+    player.play();
+  }
+
+  function undoToLastIn() {
+    const player = document.getElementById('videoPlayer');
+
+    if (activeInTime !== null) {
+      player.currentTime = parseFloat(activeInTime);
+      showToast(`↩ 打込み中のIN (${activeInTime}s) へ戻りました`);
+      activeInTime = null;
+      renderClipList();
+      player.play();
+      return;
+    }
+
+    if (clipsData.length > 0) {
+      const lastClip = clipsData[clipsData.length - 1];
+      player.currentTime = parseFloat(lastClip.in);
+      showToast(`↩ クリップ #${clipsData.length} のIN (${lastClip.in}s) へ戻りました`);
+      player.play();
+      return;
+    }
+
+    showToast(`戻れるINの記録がありません`);
+  }
+
+  // ★ キーボードショートカット (フォーカス解除を追加して誤作動防止)
+  window.addEventListener('keydown', function(e) {
+    const player = document.getElementById('videoPlayer');
+    if (!player.src) return;
+
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+    if (e.repeat) return;
+
+    const modalActive = document.getElementById('winnerModal').classList.contains('active');
+
+    if (modalActive) {
+      if (e.key === '1') {
+        e.preventDefault();
+        resolveRally('p1');
+        return;
+      }
+      if (e.key === '2') {
+        e.preventDefault();
+        resolveRally('p2');
+        return;
+      }
+      if (e.key.toLowerCase() === 'u' || e.key === 'Escape') {
+        e.preventDefault();
+        cancelModalAndSeekToIn();
+        return;
+      }
+    }
+
+    switch(e.key.toLowerCase()) {
+      case ' ':
+      case 'space':
+        e.preventDefault();
+        // 他のボタン等にフォーカスが残っていた場合に脱出
+        if (document.activeElement && document.activeElement.blur) {
+          document.activeElement.blur();
+        }
+        if (player.paused) {
+          player.play();
+        } else {
+          player.pause();
+        }
+        break;
+      case 'arrowleft':
+        e.preventDefault();
+        player.currentTime = Math.max(0, player.currentTime - 5);
+        break;
+      case 'arrowright':
+        e.preventDefault();
+        player.currentTime = Math.min(player.duration, player.currentTime + 5);
+        break;
+      case 'i':
+        e.preventDefault();
+        activeInTime = player.currentTime.toFixed(2);
+        showToast(`START (IN): ${activeInTime}s`);
+        renderClipList();
+        break;
+      case 'o':
+        e.preventDefault();
+        if (!activeInTime) {
+          alert("先に 'I' キーでINポイントを指定してください。");
+          return;
+        }
+        pendingOutTime = player.currentTime.toFixed(2);
+        if (parseFloat(pendingOutTime) <= parseFloat(activeInTime)) {
+          alert("OUT時間はIN時間より後である必要があります。");
+          return;
+        }
+        player.pause();
+        openWinnerModal();
+        break;
+      case 'u':
+        e.preventDefault();
+        undoToLastIn();
+        break;
+      case '[':
+        e.preventDefault();
+        adjustSpeed(-0.25);
+        break;
+      case ']':
+        e.preventDefault();
+        adjustSpeed(0.25);
+        break;
+      case '\\':
+        e.preventDefault();
+        resetSpeed();
+        break;
+    }
+  });
+
+  function openWinnerModal() {
+    document.getElementById('modalP1Name').innerText = pair1;
+    document.getElementById('modalP2Name').innerText = pair2;
+    document.getElementById('modalTimeInfo').innerText = `IN: ${activeInTime}s ➔ OUT: ${pendingOutTime}s`;
+    document.getElementById('winnerModal').classList.add('active');
+  }
+
+  function resolveRally(winnerKey) {
+    clipsData.push({
+      in: activeInTime,
+      out: pendingOutTime,
+      winner: winnerKey,
+      scoreBefore: '',
+      scoreAfter: ''
+    });
+
+    document.getElementById('winnerModal').classList.remove('active');
+    activeInTime = null;
+    pendingOutTime = null;
+
+    recalculateAllScores();
+    document.getElementById('videoPlayer').play();
+  }
+
+  function showToast(msg) {
+    const overlay = document.getElementById('scorePreview');
+    const origText = document.getElementById('currentScoreText').innerText;
+    overlay.innerText = `⏱️ ${msg}`;
+    setTimeout(() => { overlay.innerText = origText; }, 1400);
+  }
+
+  function renderClipList() {
+    const container = document.getElementById('clipList');
+    const scrollCard = document.getElementById('clipListContainer');
+    document.getElementById('clipCount').innerText = clipsData.length;
+    container.innerHTML = '';
+
+    // 確定済みクリップの描画
+    clipsData.forEach((clip, index) => {
+      const winnerName = clip.winner === 'p1' ? pair1 : pair2;
+      const item = document.createElement('div');
+      item.className = 'clip-item';
+      item.setAttribute('onclick', `jumpToClipIn(${index})`);
+      item.innerHTML = `
+        <div class="clip-info">
+          <div><strong>${clip.scoreAfter}</strong></div>
+          <div class="clip-time">${clip.in}s ➔ ${clip.out}s (開始時: ${clip.scoreBefore})</div>
+          <button class="winner-toggle-btn" onclick="toggleClipWinner(${index}, event)">勝者: ${winnerName} (変更)</button>
+        </div>
+        <button class="btn-del" onclick="removeClip(${index}, event)">✕</button>
+      `;
+      container.appendChild(item);
+    });
+
+    // 打込み中（INのみ指定状態）の未確定ログを表示
+    if (activeInTime !== null) {
+      const draftItem = document.createElement('div');
+      draftItem.className = 'clip-item active-in';
+      draftItem.setAttribute('onclick', `jumpToActiveIn()`);
+      draftItem.innerHTML = `
+        <div class="clip-info">
+          <div><strong style="color:var(--accent-yellow);">⏳ [計測中...] OUT待ち</strong></div>
+          <div class="clip-time">IN: ${activeInTime}s ➔ OUT: --.--s</div>
+        </div>
+        <button class="btn-del" onclick="cancelActiveIn(event)" title="打込みをキャンセル">✕</button>
+      `;
+      container.appendChild(draftItem);
+    }
+
+    // 最新ログが見えるように自動スクロール
+    setTimeout(() => {
+      scrollCard.scrollTop = scrollCard.scrollHeight;
+    }, 50);
+  }
+
+  function removeClip(index, event) {
+    event.stopPropagation();
+    clipsData.splice(index, 1);
+    recalculateAllScores();
+  }
+
+  // Generate Python Code
+  function generatePythonScript() {
+    if (clipsData.length === 0) {
+      alert("クリップが記録されていません。");
+      return;
+    }
+
+    const clipsJsonStr = JSON.stringify(clipsData, null, 2);
+
+    const pythonScript = `import subprocess
+import os
+
+input_video = "${videoFileName}"
+clips = ${clipsJsonStr}
+
+print("動画処理を開始します...")
+
+font_file = "C\\\\:/Windows/Fonts/meiryo.ttc"
+created_clips = []
+
+for i, clip in enumerate(clips):
+    out_name = f"clip_{i:03d}.mp4"
+    display_score = clip['scoreBefore']
+    vf_text = f"drawtext=fontfile='{font_file}':text='{display_score}':x=40:y=40:fontsize=32:fontcolor=white:box=1:boxcolor=black@0.6"
+    
+    cmd = [
+        'ffmpeg', '-y',
+        '-ss', str(clip['in']),
+        '-to', str(clip['out']),
+        '-i', input_video,
+        '-vf', vf_text,
+        '-c:v', 'h264_nvenc',
+        '-c:a', 'aac',
+        out_name
+    ]
+    
+    res = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='ignore')
+    if res.returncode != 0:
+        print(f"❌ {out_name} の作成に失敗しました:")
+        print(res.stderr)
+        break
+    else:
+        print(f"✅ {out_name} 作成成功 (動画上表示スコア: {display_score})")
+        created_clips.append(out_name)
+
+if len(created_clips) == len(clips):
+    list_file = "filelist.txt"
+    with open(list_file, "w", encoding="utf-8") as f:
+        for clip_path in created_clips:
+            f.write(f"file '{clip_path}'\\n")
+
+    concat_cmd = ['ffmpeg', '-y', '-f', 'concat', '-safe', '0', '-i', list_file, '-c', 'copy', 'output_digest.mp4']
+    subprocess.run(concat_cmd)
+    
+    print("一時ファイルを削除中...")
+    for clip_path in created_clips:
+        if os.path.exists(clip_path):
+            os.remove(clip_path)
+    if os.path.exists(list_file):
+        os.remove(list_file)
+
+    print("\\n🎉 完了！中間ファイルを削除し 'output_digest.mp4' を作成しました。")
+`;
+
+    const blob = new Blob([pythonScript], { type: 'text/x-python;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'render_digest.py';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  updatePairNames();
+</script>
+
+</body>
+</html>
