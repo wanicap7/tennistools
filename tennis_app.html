@@ -371,6 +371,81 @@
       background: #1e293b;
       color: var(--accent-color);
     }
+  
+    /* Help Modal */
+    .help-modal-card {
+      background: var(--card-bg);
+      border: 1px solid #334155;
+      padding: 24px;
+      border-radius: 16px;
+      width: 92%;
+      max-width: 760px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 30px rgba(0,0,0,0.5);
+    }
+
+    .help-modal-card h2 {
+      margin-top: 0;
+      font-size: 22px;
+    }
+
+    .help-modal-card h3 {
+      margin-top: 22px;
+      margin-bottom: 8px;
+      font-size: 16px;
+      color: var(--accent-color);
+    }
+
+    .help-modal-card p,
+    .help-modal-card li {
+      color: var(--text-main);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .help-modal-card ul,
+    .help-modal-card ol {
+      padding-left: 22px;
+    }
+
+    .help-grid {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 8px 14px;
+      align-items: start;
+      font-size: 14px;
+    }
+
+    .help-key {
+      font-family: monospace;
+      font-weight: bold;
+      color: var(--accent-color);
+    }
+
+    .help-note {
+      background: #0f172a;
+      border-left: 4px solid var(--accent-yellow);
+      padding: 10px 12px;
+      border-radius: 6px;
+      margin-top: 12px;
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .help-close-btn {
+      width: 100%;
+      margin-top: 20px;
+      background: #334155;
+      color: #fff;
+      border: 1px solid #475569;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
   </style>
 </head>
 <body>
@@ -410,6 +485,9 @@
         📂 編集データ読込
         <input type="file" id="projectFile" accept=".json,application/json">
       </div>
+      <button type="button" onclick="openHelpModal()" style="background:#0f172a;color:#fff;border:1px solid #475569;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:600;">
+        ❓ 使い方
+      </button>
     </div>
   </header>
 
@@ -478,6 +556,126 @@
   </div>
 </div>
 
+<!-- Help Modal -->
+<div id="helpModal" class="modal-overlay">
+  <div class="help-modal-card">
+    <h2>🎾 テニスダイジェスト Studio 使い方</h2>
+
+    <h3>基本の流れ</h3>
+    <ol>
+      <li>「動画選択」から編集する試合動画を読み込みます。</li>
+      <li>ペア名と試合ルールを設定します。</li>
+      <li>ラリー開始位置で <span class="help-key">I</span> キーを押してINを記録します。</li>
+      <li>ラリー終了位置で <span class="help-key">O</span> キーを押してOUTを記録します。</li>
+      <li>得点したペアを <span class="help-key">1</span> / <span class="help-key">2</span> で選択します。</li>
+      <li>全ラリーの記録後、「render_digest.py をダウンロードして書き出す」を押します。</li>
+      <li>生成されたPythonスクリプトを元動画と同じフォルダで実行すると、FFmpegでダイジェスト動画が作成されます。</li>
+    </ol>
+
+    <h3>キーボード操作</h3>
+    <div class="help-grid">
+      <div class="help-key">Space</div><div>再生 / 一時停止</div>
+      <div class="help-key">← / →</div><div>動画時間で5秒戻る / 5秒進む（再生速度に関係なく常に5秒）</div>
+      <div class="help-key">I</div><div>ラリー開始位置（IN）を記録</div>
+      <div class="help-key">O</div><div>ラリー終了位置（OUT）を記録</div>
+      <div class="help-key">1 / 2</div><div>ラリーの得点ペアを選択</div>
+      <div class="help-key">U</div><div>直前のIN位置へ戻る</div>
+      <div class="help-key">Ctrl + Z</div><div>直前に確定した得点クリップを1件取り消す</div>
+      <div class="help-key">[ / ]</div><div>再生速度を0.25倍ずつ変更</div>
+      <div class="help-key">\\</div><div>再生速度を1.0倍へ戻す</div>
+    </div>
+
+    <h3>スコア・得点の修正</h3>
+    <p>
+      記録済みクリップの「勝者: ○○（変更）」を押すと、得点したペアを入れ替えられます。
+      クリップ右側の「✕」でそのラリーを削除できます。修正後は以降のスコアも自動で再計算されます。
+    </p>
+
+    <h3>編集途中の保存 / 再開</h3>
+    <p>
+      「編集データ保存」で、ペア名・ルール・IN/OUT・勝者情報をJSONファイルに保存できます。
+      後日「編集データ読込」からJSONを読み込めば続きから再開できます。
+    </p>
+    <div class="help-note">
+      ブラウザのセキュリティ仕様上、JSONから元動画ファイルそのものを自動で再選択することはできません。
+      再開時は、JSON読込後に同じ元動画を「動画選択」から選び直してください。
+    </div>
+
+    <h3>試合ルール</h3>
+    <ul>
+      <li><strong>6先 ノーアド：</strong>40-40から次の1ポイントでゲーム。</li>
+      <li><strong>6先 セミアド：</strong>1回目の40-40は通常のアド方式。アドを取り返して2回目の40-40になったら次の1ポイントでゲーム。</li>
+      <li><strong>1セットマッチ：</strong>通常のアド方式。6-6で7ポイント・2点差のタイブレーク。</li>
+    </ul>
+
+    <h3>Windowsで初めて使う場合の準備</h3>
+
+    <h3>1. Pythonのインストール</h3>
+    <ol>
+      <li>Webブラウザで <strong>Python公式サイト</strong> を開き、Windows向けPython 3系をダウンロードします。</li>
+      <li>インストーラーを起動します。</li>
+      <li>最初の画面で <strong>「Add python.exe to PATH」</strong> にチェックを入れてからインストールしてください。</li>
+      <li>インストール後、Windowsキーを押して「cmd」と入力し、コマンドプロンプトを開きます。</li>
+      <li><span class="help-key">python --version</span> を実行し、Pythonのバージョンが表示されれば完了です。</li>
+    </ol>
+
+    <div class="help-note">
+      「python が見つかりません」と表示される場合は、PythonのPATHが設定されていない可能性があります。
+      Pythonを再インストールし、「Add python.exe to PATH」にチェックを入れる方法が簡単です。
+    </div>
+
+    <h3>2. FFmpegのインストール</h3>
+    <ol>
+      <li>Windows向けのFFmpegビルドをダウンロードします。</li>
+      <li>ZIPファイルを展開し、例として <span class="help-key">C:\ffmpeg</span> に配置します。</li>
+      <li><span class="help-key">C:\ffmpeg\bin\ffmpeg.exe</span> が存在することを確認します。</li>
+      <li>Windows検索で「環境変数」と入力し、「システム環境変数の編集」を開きます。</li>
+      <li>「環境変数」→ ユーザー環境変数またはシステム環境変数の <strong>Path</strong> →「編集」→「新規」を選択します。</li>
+      <li><span class="help-key">C:\ffmpeg\bin</span> を追加してOKで閉じます。</li>
+      <li>新しくコマンドプロンプトを開き、<span class="help-key">ffmpeg -version</span> を実行します。</li>
+      <li>FFmpegのバージョン情報が表示されれば完了です。</li>
+    </ol>
+
+    <div class="help-note">
+      PATHを変更した後は、すでに開いているコマンドプロンプトには反映されません。
+      必ず新しくコマンドプロンプトを開き直してください。
+    </div>
+
+    <h3>3. ダイジェストを書き出す</h3>
+    <ol>
+      <li>このHTMLでラリーを記録し、「render_digest.py をダウンロードして書き出す」を押します。</li>
+      <li><strong>元動画</strong> と <strong>render_digest.py</strong> を同じフォルダに置きます。</li>
+      <li>エクスプローラーでそのフォルダを開き、上部のアドレス欄に <span class="help-key">cmd</span> と入力してEnterを押します。</li>
+      <li>そのフォルダをカレントディレクトリにしたコマンドプロンプトが開きます。</li>
+      <li><span class="help-key">python render_digest.py</span> を実行します。</li>
+      <li>処理完了後、同じフォルダに <span class="help-key">output_digest.mp4</span> が生成されます。</li>
+    </ol>
+
+    <h3>4. 動作確認コマンド</h3>
+    <div class="help-grid">
+      <div class="help-key">python --version</div><div>Pythonが利用できるか確認</div>
+      <div class="help-key">ffmpeg -version</div><div>FFmpegが利用できるか確認</div>
+      <div class="help-key">python render_digest.py</div><div>ダイジェスト動画を生成</div>
+    </div>
+
+    <h3>5. よくあるエラー</h3>
+    <ul>
+      <li><strong>python は認識されていません：</strong> PythonのPATH設定を確認してください。</li>
+      <li><strong>ffmpeg は認識されていません：</strong> FFmpegのbinフォルダがPATHに登録されているか確認してください。</li>
+      <li><strong>元動画が見つからない：</strong> render_digest.py と元動画を同じフォルダに置いてください。動画ファイル名も変更しないでください。</li>
+      <li><strong>h264_nvenc 関連で失敗：</strong> NVIDIA GPUまたは対応ドライバーが利用できない環境では、生成スクリプトのエンコーダー変更が必要になる場合があります。</li>
+    </ul>
+
+    <h3>ダイジェスト書き出し</h3>
+    <p>
+      処理が正常に完了すると <span class="help-key">output_digest.mp4</span> が生成されます。
+      作業途中に作成される個別クリップは、正常終了時に自動削除されます。
+    </p>
+
+    <button class="help-close-btn" onclick="closeHelpModal()">閉じる</button>
+  </div>
+</div>
+
 <script>
   let videoFileName = "DJI_0001.MP4";
   let activeInTime = null;
@@ -498,6 +696,14 @@
     document.getElementById('videoPlayer').src = URL.createObjectURL(file);
     e.target.blur();
   });
+
+  function openHelpModal() {
+    document.getElementById('helpModal').classList.add('active');
+  }
+
+  function closeHelpModal() {
+    document.getElementById('helpModal').classList.remove('active');
+  }
 
   function updatePairNames() {
     pair1 = document.getElementById('pair1Input').value || "ペア1";
@@ -873,6 +1079,14 @@
   // ★ キーボードショートカット (フォーカス解除を追加して誤作動防止)
   window.addEventListener('keydown', function(e) {
     const player = document.getElementById('videoPlayer');
+
+    if (document.getElementById('helpModal').classList.contains('active')) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeHelpModal();
+      }
+      return;
+    }
 
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
     if (e.repeat) return;
