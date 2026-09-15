@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>テニスコート空き状況</title>
+  <link rel="stylesheet" href="availability.css">
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <a class="back" href="index.html">‹ 戻る</a>
+      <div>
+        <h1>🎾 テニスコート空き状況</h1>
+        <p id="updatedAt">読み込み中...</p>
+      </div>
+      <button id="reloadButton" class="reload" type="button">更新</button>
+    </header>
+
+    <section class="summary">
+      <button class="summary-card active" data-status="available">
+        <span>空き</span>
+        <strong id="availableCount">-</strong>
+      </button>
+      <button class="summary-card" data-status="waiting">
+        <span>開放待ち</span>
+        <strong id="waitingCount">-</strong>
+      </button>
+      <button class="summary-card" data-status="all">
+        <span>すべて</span>
+        <strong id="allCount">-</strong>
+      </button>
+    </section>
+
+    <section class="filters">
+      <label>
+        条件
+        <select id="conditionFilter">
+          <option value="all">すべて</option>
+        </select>
+      </label>
+      <label>
+        検索元
+        <select id="sourceFilter">
+          <option value="all">すべて</option>
+          <option value="yokohama">横浜市</option>
+          <option value="e-kanagawa">保土ケ谷公園</option>
+        </select>
+      </label>
+    </section>
+
+    <div id="warningBox" class="warning hidden"></div>
+    <div id="results"></div>
+    <div id="emptyState" class="empty hidden">該当する空き枠はありません。</div>
+  </div>
+
+  <template id="slotTemplate">
+    <article class="slot-card">
+      <div class="slot-head">
+        <span class="status"></span>
+        <span class="condition"></span>
+      </div>
+      <div class="time"></div>
+      <div class="facility"></div>
+      <div class="court"></div>
+      <a class="booking-link" target="_blank" rel="noopener noreferrer">予約サイトを開く ›</a>
+    </article>
+  </template>
+
+  <script src="availability.js" defer></script>
+</body>
+</html>
