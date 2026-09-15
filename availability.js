@@ -21,7 +21,8 @@ function getVisibleSlots() {
 
   return state.data.slots.filter((slot) => {
     const statusOk =
-      state.status === "all" || slot.status === state.status;
+      (slot.status === "available" && state.showAvailable) ||
+      (slot.status === "waiting" && state.showWaiting);
 
     const conditionOk =
       conditionFilter.value === "all" ||
@@ -211,13 +212,18 @@ async function loadData() {
 
 document.querySelectorAll(".status-tab").forEach((button) => {
   button.addEventListener("click", () => {
-    state.status = button.dataset.status;
+    const status = button.dataset.status;
 
-    document.querySelectorAll(".status-tab").forEach((x) => {
-      x.classList.remove("active");
-    });
+    if (status === "available") {
+      state.showAvailable = !state.showAvailable;
+      button.classList.toggle("active", state.showAvailable);
+    }
 
-    button.classList.add("active");
+    if (status === "waiting") {
+      state.showWaiting = !state.showWaiting;
+      button.classList.toggle("active", state.showWaiting);
+    }
+
     render();
   });
 });
