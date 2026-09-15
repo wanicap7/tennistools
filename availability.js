@@ -532,8 +532,29 @@ function render() {
   }
 
 
-  const slots =
-    getVisibleSlots();
+const slots =
+  getVisibleSlots().sort((a, b) => {
+
+    const dateCompare =
+      a.date.localeCompare(b.date);
+
+    if (dateCompare !== 0) {
+      return dateCompare;
+    }
+
+    const timeCompare =
+      (a.time || "").localeCompare(b.time || "");
+
+    if (timeCompare !== 0) {
+      return timeCompare;
+    }
+
+    return (a.facility || "")
+      .localeCompare(
+        b.facility || "",
+        "ja"
+      );
+  });
 
 
   /*
