@@ -1,9 +1,230 @@
 {
-  "updated_at": null,
-  "updated_at_display": "初回データ取得前",
-  "count": 0,
-  "available_count": 0,
-  "waiting_count": 0,
+  "updated_at": "2026-09-15T15:51:59+09:00",
+  "updated_at_display": "2026/09/15 15:51",
+  "count": 20,
+  "available_count": 10,
+  "waiting_count": 10,
   "errors": [],
-  "slots": []
+  "slots": [
+    {
+      "source": "yokohama",
+      "facility": "保土ケ谷スポーツセンター",
+      "court": "テニスコート１",
+      "date": "令和8年10月10日(土)",
+      "weekday": "",
+      "time": "7:30～9:00",
+      "status": "available",
+      "condition": "条件A：土日早朝（保土ケ谷）",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/VacantFrameFacilityStatus"
+    },
+    {
+      "source": "yokohama",
+      "facility": "保土ケ谷スポーツセンター",
+      "court": "テニスコート２",
+      "date": "令和8年10月10日(土)",
+      "weekday": "",
+      "time": "7:30～9:00",
+      "status": "available",
+      "condition": "条件A：土日早朝（保土ケ谷）",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/VacantFrameFacilityStatus"
+    },
+    {
+      "source": "yokohama",
+      "facility": "保土ケ谷スポーツセンター",
+      "court": "テニスコート２",
+      "date": "令和8年10月11日(日)",
+      "weekday": "",
+      "time": "7:30～9:00",
+      "status": "available",
+      "condition": "条件A：土日早朝（保土ケ谷）",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/VacantFrameFacilityStatus"
+    },
+    {
+      "source": "yokohama",
+      "facility": "入船公園",
+      "court": "テニスコート１",
+      "date": "令和8年10月13日(火)",
+      "weekday": "",
+      "time": "19:00～21:00",
+      "status": "waiting",
+      "condition": "条件B：平日夜",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/VacantFrameFacilityStatus"
+    },
+    {
+      "source": "yokohama",
+      "facility": "保土ケ谷スポーツセンター",
+      "court": "テニスコート２",
+      "date": "令和8年10月17日(土)",
+      "weekday": "",
+      "time": "7:30～9:00",
+      "status": "available",
+      "condition": "条件A：土日早朝（保土ケ谷）",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/VacantFrameFacilityStatus"
+    },
+    {
+      "source": "yokohama",
+      "facility": "保土ケ谷スポーツセンター",
+      "court": "テニスコート２",
+      "date": "令和8年10月24日(土)",
+      "weekday": "",
+      "time": "7:30～11:00",
+      "status": "available",
+      "condition": "条件A：土日早朝（保土ケ谷）",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/VacantFrameFacilityStatus"
+    },
+    {
+      "source": "yokohama",
+      "facility": "保土ケ谷スポーツセンター",
+      "court": "テニスコート２",
+      "date": "令和8年10月31日(土)",
+      "weekday": "",
+      "time": "7:30～11:00",
+      "status": "available",
+      "condition": "条件A：土日早朝（保土ケ谷）",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/VacantFrameFacilityStatus"
+    },
+    {
+      "source": "yokohama",
+      "facility": "保土ケ谷スポーツセンター",
+      "court": "テニスコート１",
+      "date": "令和8年10月31日(土)",
+      "weekday": "",
+      "time": "7:30～9:00",
+      "status": "available",
+      "condition": "条件A：土日早朝（保土ケ谷）",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/VacantFrameFacilityStatus"
+    },
+    {
+      "source": "yokohama",
+      "facility": "入船公園",
+      "court": "テニスコート１",
+      "date": "令和8年10月3日(土)",
+      "weekday": "",
+      "time": "17:00～19:00",
+      "status": "waiting",
+      "condition": "条件C：土日夕方～夜",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/VacantFrameFacilityStatus"
+    },
+    {
+      "source": "yokohama",
+      "facility": "新横浜公園",
+      "court": "テニスコート７",
+      "date": "令和8年10月3日(土)",
+      "weekday": "",
+      "time": "19:00～21:00",
+      "status": "waiting",
+      "condition": "条件C：土日夕方～夜",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/VacantFrameFacilityStatus"
+    },
+    {
+      "source": "yokohama",
+      "facility": "保土ケ谷スポーツセンター",
+      "court": "テニスコート２",
+      "date": "令和8年10月3日(土)",
+      "weekday": "",
+      "time": "7:30～13:00",
+      "status": "available",
+      "condition": "条件A：土日早朝（保土ケ谷）",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/VacantFrameFacilityStatus"
+    },
+    {
+      "source": "yokohama",
+      "facility": "新杉田公園",
+      "court": "テニスコート２",
+      "date": "令和8年10月4日(日)",
+      "weekday": "",
+      "time": "19:00～21:00",
+      "status": "waiting",
+      "condition": "条件C：土日夕方～夜",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/VacantFrameFacilityStatus"
+    },
+    {
+      "source": "yokohama",
+      "facility": "保土ケ谷スポーツセンター",
+      "court": "テニスコート２",
+      "date": "令和8年9月19日(土)",
+      "weekday": "",
+      "time": "7:30～9:00",
+      "status": "available",
+      "condition": "条件A：土日早朝（保土ケ谷）",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/VacantFrameFacilityStatus"
+    },
+    {
+      "source": "yokohama",
+      "facility": "入船公園",
+      "court": "テニスコート４",
+      "date": "令和8年9月20日(日)",
+      "weekday": "",
+      "time": "17:00～19:00",
+      "status": "waiting",
+      "condition": "条件C：土日夕方～夜",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/VacantFrameFacilityStatus"
+    },
+    {
+      "source": "yokohama",
+      "facility": "入船公園",
+      "court": "テニスコート１",
+      "date": "令和8年9月20日(日)",
+      "weekday": "",
+      "time": "19:00～21:00",
+      "status": "waiting",
+      "condition": "条件C：土日夕方～夜",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/VacantFrameFacilityStatus"
+    },
+    {
+      "source": "yokohama",
+      "facility": "入船公園",
+      "court": "テニスコート３",
+      "date": "令和8年9月20日(日)",
+      "weekday": "",
+      "time": "19:00～21:00",
+      "status": "waiting",
+      "condition": "条件C：土日夕方～夜",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/VacantFrameFacilityStatus"
+    },
+    {
+      "source": "yokohama",
+      "facility": "三ツ沢公園",
+      "court": "テニスコート１０",
+      "date": "令和8年9月23日(水)",
+      "weekday": "",
+      "time": "19:00～21:00",
+      "status": "waiting",
+      "condition": "条件B：平日夜",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/VacantFrameFacilityStatus"
+    },
+    {
+      "source": "yokohama",
+      "facility": "三ツ沢公園",
+      "court": "テニスコート１６",
+      "date": "令和8年9月23日(水)",
+      "weekday": "",
+      "time": "19:00～21:00",
+      "status": "waiting",
+      "condition": "条件B：平日夜",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/VacantFrameFacilityStatus"
+    },
+    {
+      "source": "yokohama",
+      "facility": "保土ケ谷スポーツセンター",
+      "court": "テニスコート２",
+      "date": "令和8年9月26日(土)",
+      "weekday": "",
+      "time": "7:30～9:00",
+      "status": "available",
+      "condition": "条件A：土日早朝（保土ケ谷）",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/VacantFrameFacilityStatus"
+    },
+    {
+      "source": "yokohama",
+      "facility": "潮田公園",
+      "court": "テニスコート３",
+      "date": "令和8年9月28日(月)",
+      "weekday": "",
+      "time": "19:00～21:00",
+      "status": "waiting",
+      "condition": "条件B：平日夜",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/VacantFrameFacilityStatus"
+    }
+  ]
 }
