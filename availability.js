@@ -2,7 +2,8 @@ const DATA_URL = "data/availability.json";
 
 const state = {
   data: null,
-  status: "available",
+  showAvailable: true,
+  showWaiting: true,
 };
 
 const updatedAt = document.getElementById("updatedAt");
