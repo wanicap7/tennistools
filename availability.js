@@ -526,93 +526,94 @@ function makeRow(slot) {
 function render() {
 
   if (!state.data) {
-
     return;
-
   }
 
+  const slots = getVisibleSlots();
 
-const slots =
-  getVisibleSlots().sort((a, b) => {
+  availableCount.textContent =
+    state.data.available_count ?? 0;
 
-    const dateCompare =
-      a.date.localeCompare(b.date);
+  waitingCount.textContent =
+    state.data.waiting_count ?? 0;
 
-    if (dateCompare !== 0) {
-      return dateCompare;
+  results.innerHTML = "";
+
+  emptyState.classList.toggle(
+    "hidden",
+    slots.length > 0
+  );
+
+
+  // =========================================================
+  // 日付 → 時間 → 施設名 の順でソート
+  // =========================================================
+
+  slots.sort((a, b) => {
+
+    // YYYY-MM-DD を数値化
+    const dateA = new Date(
+      `${a.date}T00:00:00`
+    ).getTime();
+
+    const dateB = new Date(
+      `${b.date}T00:00:00`
+    ).getTime();
+
+
+    // 日付昇順
+    if (dateA !== dateB) {
+      return dateA - dateB;
     }
 
+
+    // 時間昇順
+    const timeA =
+      a.time || "";
+
+    const timeB =
+      b.time || "";
+
     const timeCompare =
-      (a.time || "").localeCompare(b.time || "");
+      timeA.localeCompare(
+        timeB,
+        "ja"
+      );
 
     if (timeCompare !== 0) {
       return timeCompare;
     }
 
-    return (a.facility || "")
-      .localeCompare(
-        b.facility || "",
-        "ja"
-      );
+
+    // 施設名昇順
+    return (
+      a.facility || ""
+    ).localeCompare(
+      b.facility || "",
+      "ja"
+    );
+
   });
 
 
-  /*
-    件数
-  */
+  // =========================================================
+  // 日付ごとにグループ化
+  // =========================================================
 
-  availableCount.textContent =
-    state.data.available_count ?? 0;
-
-
-  waitingCount.textContent =
-    state.data.waiting_count ?? 0;
+  const groups = new Map();
 
 
-  /*
-    一覧初期化
-  */
-
-  results.innerHTML =
-    "";
-
-
-  emptyState.classList.toggle(
-
-    "hidden",
-
-    slots.length > 0
-
-  );
-
-
-  /*
-    日付単位でグループ化
-  */
-
-  const groups =
-    new Map();
-
-
-  for (
-    const slot
-    of slots
-  ) {
+  for (const slot of slots) {
 
     const key =
-
       `${slot.date}|${slot.weekday || ""}`;
 
 
-    if (
-      !groups.has(key)
-    ) {
-
+    if (!groups.has(key)) {
       groups.set(
         key,
         []
       );
-
     }
 
 
@@ -623,13 +624,41 @@ const slots =
   }
 
 
-  /*
-    描画
-  */
+  // =========================================================
+  // グループ側も念のため日付昇順にする
+  // =========================================================
+
+  const sortedGroups =
+    [...groups.entries()]
+      .sort((a, b) => {
+
+        const dateA =
+          a[0].split("|")[0];
+
+        const dateB =
+          b[0].split("|")[0];
+
+
+        return (
+          new Date(
+            `${dateA}T00:00:00`
+          ).getTime()
+          -
+          new Date(
+            `${dateB}T00:00:00`
+          ).getTime()
+        );
+
+      });
+
+
+  // =========================================================
+  // 描画
+  // =========================================================
 
   for (
     const [key, daySlots]
-    of groups
+    of sortedGroups
   ) {
 
     const [
@@ -649,10 +678,6 @@ const slots =
       "day-group";
 
 
-    /*
-      日付
-    */
-
     const title =
       document.createElement(
         "h2"
@@ -663,20 +688,12 @@ const slots =
       "day-title";
 
 
-    /*
-      2026-09-20
-      ↓
-      09/20
-    */
-
     const compactDate =
       date
-
         .replace(
           /^\d{4}-/,
           ""
         )
-
         .replace(
           "-",
           "/"
@@ -684,17 +701,10 @@ const slots =
 
 
     title.textContent =
-
       weekday
-
         ? `${compactDate}（${weekday}）`
-
         : compactDate;
 
-
-    /*
-      一覧
-    */
 
     const table =
       document.createElement(
