@@ -9,7 +9,6 @@ const state = {
 const updatedAt = document.getElementById("updatedAt");
 const availableCount = document.getElementById("availableCount");
 const waitingCount = document.getElementById("waitingCount");
-const allCount = document.getElementById("allCount");
 const results = document.getElementById("results");
 const emptyState = document.getElementById("emptyState");
 const warningBox = document.getElementById("warningBox");
@@ -136,7 +135,6 @@ function render() {
 
   availableCount.textContent = state.data.available_count ?? 0;
   waitingCount.textContent = state.data.waiting_count ?? 0;
-  allCount.textContent = state.data.count ?? state.data.slots.length;
 
   results.innerHTML = "";
   emptyState.classList.toggle("hidden", slots.length > 0);
