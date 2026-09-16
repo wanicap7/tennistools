@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-09-16T23:41:55+09:00",
-  "updated_at_display": "2026/09/16 23:41",
-  "count": 11,
+  "updated_at": "2026-09-17T03:44:42+09:00",
+  "updated_at_display": "2026/09/17 03:44",
+  "count": 12,
   "available_count": 7,
-  "waiting_count": 4,
+  "waiting_count": 5,
   "errors": [],
   "slots": [
     {
@@ -13,6 +13,17 @@
       "date": "2026-09-21",
       "weekday": "月",
       "time": "17:00～21:00",
+      "status": "waiting",
+      "condition": "条件B：平日夜",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
+    },
+    {
+      "source": "yokohama",
+      "facility": "入船公園",
+      "court": "テニスコート２",
+      "date": "2026-09-21",
+      "weekday": "月",
+      "time": "19:00～21:00",
       "status": "waiting",
       "condition": "条件B：平日夜",
       "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
