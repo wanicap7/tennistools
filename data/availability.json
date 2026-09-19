@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-09-19T19:31:13+09:00",
-  "updated_at_display": "2026/09/19 19:31",
+  "updated_at": "2026-09-19T23:12:54+09:00",
+  "updated_at_display": "2026/09/19 23:12",
   "count": 15,
   "available_count": 6,
   "waiting_count": 9,
@@ -67,7 +67,7 @@
       "court": "テニスコート２",
       "date": "2026-09-26",
       "weekday": "土",
-      "time": "7:30～11:00",
+      "time": "7:30～9:00",
       "status": "available",
       "condition": "条件A：土日早朝（保土ケ谷）",
       "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
