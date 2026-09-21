@@ -1,11 +1,33 @@
 {
-  "updated_at": "2026-09-21T08:56:46+09:00",
-  "updated_at_display": "2026/09/21 08:56",
-  "count": 8,
+  "updated_at": "2026-09-21T12:59:12+09:00",
+  "updated_at_display": "2026/09/21 12:59",
+  "count": 10,
   "available_count": 6,
-  "waiting_count": 2,
+  "waiting_count": 4,
   "errors": [],
   "slots": [
+    {
+      "source": "yokohama",
+      "facility": "新杉田公園",
+      "court": "テニスコート１",
+      "date": "2026-09-26",
+      "weekday": "土",
+      "time": "17:00～19:00",
+      "status": "waiting",
+      "condition": "条件C：土日夕方～夜",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
+    },
+    {
+      "source": "yokohama",
+      "facility": "新横浜公園",
+      "court": "テニスコート４",
+      "date": "2026-09-26",
+      "weekday": "土",
+      "time": "17:00～19:00",
+      "status": "waiting",
+      "condition": "条件C：土日夕方～夜",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
+    },
     {
       "source": "yokohama",
       "facility": "根岸テニスガーデン",
