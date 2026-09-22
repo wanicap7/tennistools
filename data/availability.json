@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-09-22T18:10:16+09:00",
-  "updated_at_display": "2026/09/22 18:10",
-  "count": 9,
+  "updated_at": "2026-09-22T23:27:41+09:00",
+  "updated_at_display": "2026/09/22 23:27",
+  "count": 13,
   "available_count": 1,
-  "waiting_count": 8,
+  "waiting_count": 12,
   "errors": [],
   "slots": [
     {
@@ -15,6 +15,28 @@
       "time": "7:30～9:00",
       "status": "available",
       "condition": "条件A：土日早朝（保土ケ谷）",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
+    },
+    {
+      "source": "yokohama",
+      "facility": "三ツ沢公園",
+      "court": "テニスコート１６",
+      "date": "2026-09-27",
+      "weekday": "日",
+      "time": "19:00～21:00",
+      "status": "waiting",
+      "condition": "条件C：土日夕方～夜",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
+    },
+    {
+      "source": "yokohama",
+      "facility": "新杉田公園",
+      "court": "テニスコート３",
+      "date": "2026-09-27",
+      "weekday": "日",
+      "time": "19:00～21:00",
+      "status": "waiting",
+      "condition": "条件C：土日夕方～夜",
       "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
     },
     {
@@ -63,6 +85,17 @@
     },
     {
       "source": "yokohama",
+      "facility": "新横浜公園",
+      "court": "テニスコート２",
+      "date": "2026-09-29",
+      "weekday": "火",
+      "time": "19:00～21:00",
+      "status": "waiting",
+      "condition": "条件B：平日夜",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
+    },
+    {
+      "source": "yokohama",
       "facility": "三ツ沢公園",
       "court": "テニスコート８",
       "date": "2026-10-01",
@@ -76,6 +109,17 @@
       "source": "yokohama",
       "facility": "入船公園",
       "court": "テニスコート２",
+      "date": "2026-10-02",
+      "weekday": "金",
+      "time": "19:00～21:00",
+      "status": "waiting",
+      "condition": "条件B：平日夜",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
+    },
+    {
+      "source": "yokohama",
+      "facility": "新横浜公園",
+      "court": "テニスコート１",
       "date": "2026-10-02",
       "weekday": "金",
       "time": "19:00～21:00",
