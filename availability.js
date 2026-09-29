@@ -184,6 +184,11 @@ function shortCondition(text) {
     )
 
     .replace(
+      "条件D：",
+      "D "
+    )
+
+    .replace(
       "保土ケ谷公園 早朝",
       "早朝"
     );
