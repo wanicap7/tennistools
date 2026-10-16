@@ -1,11 +1,22 @@
 {
-  "updated_at": "2026-10-16T07:00:10+09:00",
-  "updated_at_display": "2026/10/16 07:00",
-  "count": 8,
+  "updated_at": "2026-10-16T09:08:31+09:00",
+  "updated_at_display": "2026/10/16 09:08",
+  "count": 9,
   "available_count": 7,
-  "waiting_count": 1,
+  "waiting_count": 2,
   "errors": [],
   "slots": [
+    {
+      "source": "yokohama",
+      "facility": "三ツ沢公園",
+      "court": "テニスコート４",
+      "date": "2026-10-24",
+      "weekday": "土",
+      "time": "17:00～19:00",
+      "status": "waiting",
+      "condition": "条件C：土日夕方～夜",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
+    },
     {
       "source": "yokohama",
       "facility": "新横浜公園",
