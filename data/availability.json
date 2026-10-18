@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-10-18T17:41:39+09:00",
-  "updated_at_display": "2026/10/18 17:41",
-  "count": 11,
+  "updated_at": "2026-10-18T22:04:43+09:00",
+  "updated_at_display": "2026/10/18 22:04",
+  "count": 12,
   "available_count": 5,
-  "waiting_count": 6,
+  "waiting_count": 7,
   "errors": [],
   "slots": [
     {
@@ -56,6 +56,17 @@
       "court": "テニスコート２",
       "date": "2026-10-25",
       "weekday": "日",
+      "time": "19:00～21:00",
+      "status": "waiting",
+      "condition": "条件C：土日夕方～夜",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
+    },
+    {
+      "source": "yokohama",
+      "facility": "新横浜公園",
+      "court": "テニスコート１",
+      "date": "2026-10-31",
+      "weekday": "土",
       "time": "19:00～21:00",
       "status": "waiting",
       "condition": "条件C：土日夕方～夜",
