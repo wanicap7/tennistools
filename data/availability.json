@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-10-21T10:23:48+09:00",
-  "updated_at_display": "2026/10/21 10:23",
-  "count": 7,
+  "updated_at": "2026-10-21T16:15:43+09:00",
+  "updated_at_display": "2026/10/21 16:15",
+  "count": 8,
   "available_count": 5,
-  "waiting_count": 2,
+  "waiting_count": 3,
   "errors": [],
   "slots": [
     {
@@ -15,6 +15,17 @@
       "time": "7:30～9:00",
       "status": "available",
       "condition": "条件A：土日早朝（保土ケ谷）",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
+    },
+    {
+      "source": "yokohama",
+      "facility": "新横浜公園",
+      "court": "テニスコート１０",
+      "date": "2026-10-26",
+      "weekday": "月",
+      "time": "19:00～21:00",
+      "status": "waiting",
+      "condition": "条件B：平日夜",
       "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
     },
     {
