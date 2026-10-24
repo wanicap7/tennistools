@@ -1,64 +1,20 @@
 {
-  "updated_at": "2026-10-25T05:26:45+09:00",
-  "updated_at_display": "2026/10/25 05:26",
-  "count": 9,
-  "available_count": 3,
-  "waiting_count": 6,
+  "updated_at": "2026-10-25T07:58:58+09:00",
+  "updated_at_display": "2026/10/25 07:58",
+  "count": 4,
+  "available_count": 4,
+  "waiting_count": 0,
   "errors": [],
   "slots": [
-    {
-      "source": "yokohama",
-      "facility": "三ツ沢公園",
-      "court": "テニスコート１",
-      "date": "2026-10-29",
-      "weekday": "木",
-      "time": "19:00～21:00",
-      "status": "waiting",
-      "condition": "条件B：平日夜",
-      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
-    },
-    {
-      "source": "yokohama",
-      "facility": "三ツ沢公園",
-      "court": "テニスコート６",
-      "date": "2026-10-29",
-      "weekday": "木",
-      "time": "19:00～21:00",
-      "status": "waiting",
-      "condition": "条件B：平日夜",
-      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
-    },
-    {
-      "source": "yokohama",
-      "facility": "入船公園",
-      "court": "テニスコート１",
-      "date": "2026-10-29",
-      "weekday": "木",
-      "time": "19:00～21:00",
-      "status": "waiting",
-      "condition": "条件B：平日夜",
-      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
-    },
     {
       "source": "yokohama",
       "facility": "保土ケ谷スポーツセンター",
       "court": "テニスコート２",
       "date": "2026-10-29",
       "weekday": "木",
-      "time": "21:00～23:00",
-      "status": "waiting",
+      "time": "19:00～23:00",
+      "status": "available",
       "condition": "条件D：水木金深夜（保土ケ谷）",
-      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
-    },
-    {
-      "source": "yokohama",
-      "facility": "三ツ沢公園",
-      "court": "テニスコート１０",
-      "date": "2026-11-06",
-      "weekday": "金",
-      "time": "19:00～21:00",
-      "status": "waiting",
-      "condition": "条件B：平日夜",
       "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
     },
     {
@@ -70,17 +26,6 @@
       "time": "21:00～23:00",
       "status": "available",
       "condition": "条件D：水木金深夜（保土ケ谷）",
-      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
-    },
-    {
-      "source": "yokohama",
-      "facility": "三ツ沢公園",
-      "court": "テニスコート１６",
-      "date": "2026-11-23",
-      "weekday": "月",
-      "time": "19:00～21:00",
-      "status": "waiting",
-      "condition": "条件B：平日夜",
       "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
     },
     {
