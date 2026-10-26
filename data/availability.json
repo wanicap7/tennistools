@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-10-26T18:54:02+09:00",
-  "updated_at_display": "2026/10/26 18:54",
-  "count": 16,
-  "available_count": 7,
+  "updated_at": "2026-10-27T01:38:16+09:00",
+  "updated_at_display": "2026/10/27 01:38",
+  "count": 15,
+  "available_count": 6,
   "waiting_count": 9,
   "errors": [],
   "slots": [
@@ -125,17 +125,6 @@
       "time": "21:00～23:00",
       "status": "available",
       "condition": "条件D：水木金深夜（保土ケ谷）",
-      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
-    },
-    {
-      "source": "yokohama",
-      "facility": "保土ケ谷スポーツセンター",
-      "court": "テニスコート２",
-      "date": "2026-11-22",
-      "weekday": "日",
-      "time": "7:30～9:00",
-      "status": "available",
-      "condition": "条件A：土日早朝（保土ケ谷）",
       "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
     },
     {
