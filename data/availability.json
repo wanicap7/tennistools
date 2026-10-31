@@ -1,11 +1,22 @@
 {
-  "updated_at": "2026-11-01T03:19:57+09:00",
-  "updated_at_display": "2026/11/01 03:19",
-  "count": 7,
-  "available_count": 3,
-  "waiting_count": 4,
+  "updated_at": "2026-11-01T07:19:02+09:00",
+  "updated_at_display": "2026/11/01 07:19",
+  "count": 6,
+  "available_count": 4,
+  "waiting_count": 2,
   "errors": [],
   "slots": [
+    {
+      "source": "yokohama",
+      "facility": "新横浜公園",
+      "court": "テニスコート３",
+      "date": "2026-11-07",
+      "weekday": "土",
+      "time": "17:00～19:00",
+      "status": "waiting",
+      "condition": "条件C：土日夕方～夜",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
+    },
     {
       "source": "yokohama",
       "facility": "保土ケ谷スポーツセンター",
@@ -13,7 +24,7 @@
       "date": "2026-11-07",
       "weekday": "土",
       "time": "7:30～9:00",
-      "status": "waiting",
+      "status": "available",
       "condition": "条件A：土日早朝（保土ケ谷）",
       "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
     },
@@ -31,34 +42,12 @@
     {
       "source": "yokohama",
       "facility": "三ツ沢公園",
-      "court": "テニスコート９",
-      "date": "2026-11-15",
+      "court": "テニスコート１１",
+      "date": "2026-11-22",
       "weekday": "日",
       "time": "17:00～19:00",
       "status": "waiting",
       "condition": "条件C：土日夕方～夜",
-      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
-    },
-    {
-      "source": "yokohama",
-      "facility": "三ツ沢公園",
-      "court": "テニスコート６",
-      "date": "2026-11-15",
-      "weekday": "日",
-      "time": "17:00～21:00",
-      "status": "waiting",
-      "condition": "条件C：土日夕方～夜",
-      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
-    },
-    {
-      "source": "yokohama",
-      "facility": "三ツ沢公園",
-      "court": "テニスコート７",
-      "date": "2026-11-25",
-      "weekday": "水",
-      "time": "19:00～21:00",
-      "status": "waiting",
-      "condition": "条件B：平日夜",
       "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
     },
     {
