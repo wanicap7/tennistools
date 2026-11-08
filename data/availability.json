@@ -1,15 +1,26 @@
 {
-  "updated_at": "2026-11-08T21:57:16+09:00",
-  "updated_at_display": "2026/11/08 21:57",
-  "count": 6,
+  "updated_at": "2026-11-09T03:15:27+09:00",
+  "updated_at_display": "2026/11/09 03:15",
+  "count": 8,
   "available_count": 1,
-  "waiting_count": 5,
+  "waiting_count": 7,
   "errors": [],
   "slots": [
     {
       "source": "yokohama",
       "facility": "三ツ沢公園",
       "court": "テニスコート５",
+      "date": "2026-11-13",
+      "weekday": "金",
+      "time": "19:00～21:00",
+      "status": "waiting",
+      "condition": "条件B：平日夜",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
+    },
+    {
+      "source": "yokohama",
+      "facility": "入船公園",
+      "court": "テニスコート４",
       "date": "2026-11-13",
       "weekday": "金",
       "time": "19:00～21:00",
@@ -26,6 +37,17 @@
       "time": "7:30～9:00",
       "status": "available",
       "condition": "条件A：土日早朝（保土ケ谷）",
+      "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
+    },
+    {
+      "source": "yokohama",
+      "facility": "新杉田公園",
+      "court": "テニスコート１",
+      "date": "2026-11-15",
+      "weekday": "日",
+      "time": "17:00～19:00",
+      "status": "waiting",
+      "condition": "条件C：土日夕方～夜",
       "booking_url": "https://www.shisetsu.city.yokohama.lg.jp/user/Home"
     },
     {
